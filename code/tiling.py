@@ -54,7 +54,7 @@ def check_null_values(dataArray: DataArray, nan_threshold: float, size_x: int, s
 
 def tile_raster(sar_image: DataArray, ice_chart: DataArray, data_folder: str, basename: str,
                 size_x: int=256, size_y: int=256, start_x: int=0, start_y: int=0,
-                end_x: int=None, end_y: int=None, stride_x: int=None, stride_y: int=None,
+                end_x: int=None, end_y: int=None, stride_x: int=128, stride_y: int=128,
                 nan_threshold: float=1.0) -> int:
 
     '''
