@@ -136,6 +136,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, data_folder: str, ba
             # Increase counter for naming convention
             img_n += 1
 
+    print (f"Number of discarded tiles: {discarded_tiles}")
     return img_n
 
 
