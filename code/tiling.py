@@ -103,8 +103,14 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, data_folder: str, ba
         for col in range(start_x, end_x, stride_x):
 
             # Tile naming convention
+            # Adding a prefix to distinguish data from the Weddell Sea and data from the Antarctic Peninsula 
+            if basename in ['20181220', '20181210', '20181209', '20181203']:
+                prefix = 'AP'
+            else:
+                prefix = 'WS'
+
             file_n = '{:0>5}'.format(img_n)
-            filename = f'{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.tiff'
+            filename = f'{prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.tiff'
 
             # Indexes ice chart and SAR images according to parameters
             sub_sar = sar_image[:, row:row + size_y, col:col + size_x]
