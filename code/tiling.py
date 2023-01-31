@@ -97,6 +97,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, data_folder: str, ba
 
     # Counter for naming convention
     img_n = 1
+    # Counter for discarded tiles
+    discarded_tiles = 0
 
     # Iterates over rows and columns of the image according to input parameters
     for row in range(start_y, end_y, stride_y):
@@ -123,14 +125,16 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, data_folder: str, ba
 
             # Checks Nan values in the current tile for both the ice chart and the SAR image. 
             # If both are True, It will save the tiles in two different folders
-            if check_null_values(sub_sar, nan_threshold, size_x, size_y) and check_null_values(sub_chart, nan_threshold, size_x, size_y):
+            if not check_null_values(sub_sar, nan_threshold, size_x, size_y) or not check_null_values(sub_chart, nan_threshold, size_x, size_y):
+                discarded_tiles += 1
+                continue
 
-                # Save files to different folders
-                sub_sar.rio.to_raster(data_folder + f'features/ftrs_{filename}')
-                sub_chart.rio.to_raster(data_folder + f'labels/lbls_{filename}')
+            # Save files to different folders
+            sub_sar.rio.to_raster(data_folder + f'features/ftrs_{filename}')
+            sub_chart.rio.to_raster(data_folder + f'labels/lbls_{filename}')
 
-                # Increase counter for naming convention
-                img_n += 1
+            # Increase counter for naming convention
+            img_n += 1
 
     return img_n
 
