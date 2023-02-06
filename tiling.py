@@ -11,7 +11,7 @@ from xarray.core.dataarray import DataArray
 from pathlib import Path
 
 
-def load_raster(file_path: str, parse_coordinates: bool=False, default_name: str=None, crs: int=4326) -> DataArray:
+def load_raster(file_path: str, parse_coordinates: bool=True, masked: bool=True, default_name: str=None, crs: int=4326) -> DataArray:
 
     '''
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
@@ -19,6 +19,7 @@ def load_raster(file_path: str, parse_coordinates: bool=False, default_name: str
             Parameters:
                     file_path (str): Path to file
                     parse_coordinates (bool): Parses the coordinates of the file, if any
+                    masked (bool): Reads raster as a mask
                     default_name (str): Name for the array
                     crs (int): Coordinate Reference System
 
@@ -26,7 +27,7 @@ def load_raster(file_path: str, parse_coordinates: bool=False, default_name: str
                     raster (xarray.core.dataarray.DataArray): DataArray from file
     '''
 
-    raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, default_name=default_name)
+    raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, masked=masked, default_name=default_name)
 
     assert type(raster) == xr.core.dataarray.DataArray # Makes sure the data structure is DataArray
     raster.rio.write_crs(crs, inplace=True) # Modifies CRS of the raster
