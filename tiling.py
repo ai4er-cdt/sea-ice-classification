@@ -148,6 +148,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 # output_folder = 'Tiled_images'
 
 # ex_chart_image = load_raster(chart_folder + '/' + chart_sar_pairs[0][0] + '.tiff', default_name='Ice Chart')
+# ex_chart_image = ex_chart_image.reindex(y=ex_chart_image.y[::-1])
 # ex_sar_image = load_raster(sar_folder + '/' + chart_sar_pairs[0][1] + '.tif', default_name='SAR Image')
 # region_prefix = chart_sar_pairs[0][2]
 # name_extract = re.findall('H_[0-9]{8}T',chart_sar_pairs[0][1])[0][2:10]
