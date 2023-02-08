@@ -3,11 +3,14 @@ AI4ER GTC - Sea Ice Classification
 
 Functions for loading and tiling of raster files
 """
+import os
 
 import xarray as xr
 import rioxarray as rxr
+import re
 from xarray.core.dataarray import DataArray
 from pathlib import Path
+from constants import chart_sar_pairs
 
 
 def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
@@ -66,10 +69,12 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     """
 
     # Standard output config
-    features_subfolder = "features"
-    labels_subfolder = "labels"
+    sar_subfolder = "sar"
+    chart_subfolder = "chart"
+    binary_subfolder = "binary_chart"
     sar_prefix = "SAR"
     chart_prefix = "CHART"
+    binary_prefix = "BINARY_CHART"
     output_ext = "tiff"
 
     # Makes sure some parameters have default values according to input
@@ -91,8 +96,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     assert 0.0 <= nan_threshold <= 1.0
 
     # Create output dirs if they don't exist
-    Path.mkdir(Path(f"{output_folder}/{features_subfolder}"), parents=True, exist_ok=True)
-    Path.mkdir(Path(f"{output_folder}/{labels_subfolder}"), parents=True, exist_ok=True)
+    Path.mkdir(Path(f"{output_folder}/{sar_subfolder}"), parents=True, exist_ok=True)
+    Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
@@ -105,16 +110,25 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             sub_sar = sar_image[:, row:row + size_y, col:col + size_x]
             sub_chart = ice_chart[:, row:row + size_y, col:col + size_x]
 
+            # Make a copy of the chart and set to binary classification objective
+            sub_binary = sub_chart.copy()
+            sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
+            sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
+
             # Checks if the current tile has the same shape as the parameters, if not it skips to the next tile
             if (sub_sar.shape[1] * sub_sar.shape[2] != size_x * size_y) or (
                     sub_chart.shape[1] * sub_chart.shape[2] != size_x * size_y):
                 continue
 
             # NaN Check: Skip to next pair if too many NaNs in either tile
+            # Range Check: Make sure all values are between 0 and 100
             # TBC: Only checks first two layers of SAR tile (i.e. ignores incidence angle)
             if (sub_chart.isnull().sum().values / (size_x * size_y) >= nan_threshold
                     or sub_sar[0, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold
-                    or sub_sar[1, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold):
+                    or sub_sar[1, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold
+                    or sub_chart[0, :, :].values.min() < 0
+                    or sub_chart[0, :, :].values.max() > 100
+            ):
                 discarded_tiles += 1
                 continue
 
@@ -123,12 +137,14 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
 
             # Separate by subfolder and prefix
-            pathout_sar = f"{output_folder}/{features_subfolder}/{sar_prefix}_{common_fname}"
-            pathout_chart = f"{output_folder}/{labels_subfolder}/{chart_prefix}_{common_fname}"
+            pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
+            pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
+            pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
+            sub_binary.rio.to_raster(Path(pathout_binary))
 
             img_n += 1
 
@@ -137,18 +153,21 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     return img_n, discarded_tiles
 
-# # EXAMPLE
-# import re
-# from constants import chart_sar_pairs
 
-# chart_folder = "FTP_data/rasterised_shapefiles"
-# sar_folder = "FTP_data/dual_band_images"
-# output_folder = "Tiled_images"
+if __name__ == "__main__":
 
-# ex_chart_image = load_raster(chart_folder + "/" + chart_sar_pairs[0][0] + ".tiff", default_name="Ice Chart")
-# ex_chart_image = ex_chart_image.reindex(y=ex_chart_image.y[::-1])
-# ex_sar_image = load_raster(sar_folder + "/" + chart_sar_pairs[0][1] + ".tif", default_name="SAR Image")
-# region_prefix = chart_sar_pairs[0][2]
-# name_extract = re.findall("H_[0-9]{8}T",chart_sar_pairs[0][1])[0][2:10]
-# print(f"\nTiling {name_extract} ...")
-# tile_raster(ex_sar_image, ex_chart_image, output_folder, name_extract, region_prefix, size_x=256, size_y=256)
+    base_folder = open("data_path.config").read()
+    chart_folder = "FTP_data/rasterised_shapefiles"
+    sar_folder = "FTP_data/dual_band_images"
+    output_folder = "Tiled_images"
+
+    n_files_to_process = 2
+    for i, (chart_name, sar_name, region) in enumerate(chart_sar_pairs):
+        if i >= n_files_to_process:
+            break
+        chart_image = load_raster(f"{base_folder}/{chart_folder}/{chart_name}.tiff", default_name="Ice Chart")
+        chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
+        sar_image = load_raster(f"{base_folder}/{sar_folder}/{sar_name}.tif", default_name="SAR Image")
+        name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]
+        print(f"Tiling {name_extract} ...")
+        tile_raster(sar_image, chart_image, output_folder, name_extract, region, size_x=256, size_y=256)
