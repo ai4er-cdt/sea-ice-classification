@@ -1,9 +1,8 @@
-'''
+"""
 AI4ER GTC - Sea Ice Classification
 
 Functions for loading and tiling of raster files
-
-'''
+"""
 
 import xarray  as xr
 import rioxarray as rxr
@@ -13,7 +12,7 @@ from pathlib import Path
 
 def load_raster(file_path: str, parse_coordinates: bool=True, masked: bool=True, default_name: str=None, crs: int=4326) -> DataArray:
 
-    '''
+    """
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
 
             Parameters:
@@ -25,7 +24,7 @@ def load_raster(file_path: str, parse_coordinates: bool=True, masked: bool=True,
 
             Returns:
                     raster (xarray.core.dataarray.DataArray): DataArray from file
-    '''
+    """
 
     raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, masked=masked, default_name=default_name)
 
@@ -40,7 +39,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 end_x: int=None, end_y: int=None, stride_x: int=128, stride_y: int=128,
                 nan_threshold: float=1.0) -> tuple[int,int]:
 
-    '''
+    """
     Slices a given pair of source images using a moving window, outputs valid tiles / sub-images to disk
     Invalid tile pairs are skipped, e.g. where one or more of the pair contains an unacceptable number of NaN values
 
@@ -64,14 +63,14 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             Returns:
                     img_n (int): Number of image / tile pairs generated
                     discared_tiles (int): Number of tile pairs discarded
-    '''
+    """
 
     # Standard output config
-    features_subfolder = 'features'
-    labels_subfolder = 'labels'
-    sar_prefix = 'SAR'
-    chart_prefix = 'CHART'
-    output_ext = 'tiff'
+    features_subfolder = "features"
+    labels_subfolder = "labels"
+    sar_prefix = "SAR"
+    chart_prefix = "CHART"
+    output_ext = "tiff"
 
     # Makes sure some parameters have default values according to input
     end_x = sar_image.shape[2] if end_x is None else end_x
@@ -92,8 +91,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     assert 0.0 <= nan_threshold <= 1.0
 
     # Create output dirs if they don't exist
-    Path.mkdir(Path(f'{output_folder}/{features_subfolder}'), parents=True, exist_ok=True)
-    Path.mkdir(Path(f'{output_folder}/{labels_subfolder}'), parents=True, exist_ok=True)
+    Path.mkdir(Path(f"{output_folder}/{features_subfolder}"), parents=True, exist_ok=True)
+    Path.mkdir(Path(f"{output_folder}/{labels_subfolder}"), parents=True, exist_ok=True)
 
     img_n = 0 # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0 # Counter for discarded tile pairs
@@ -120,12 +119,12 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 continue
 
             # Majority of filename is common to both sar and ice tiles
-            file_n = '{:0>5}'.format(img_n+1)
-            common_fname = f'{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}'
+            file_n = "{:0>5}".format(img_n+1)
+            common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
 
             # Separate by subfolder and prefix
-            pathout_sar = f'{output_folder}/{features_subfolder}/{sar_prefix}_{common_fname}' 
-            pathout_chart = f'{output_folder}/{labels_subfolder}/{chart_prefix}_{common_fname}' 
+            pathout_sar = f"{output_folder}/{features_subfolder}/{sar_prefix}_{common_fname}"
+            pathout_chart = f"{output_folder}/{labels_subfolder}/{chart_prefix}_{common_fname}"
 
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
@@ -143,14 +142,14 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 # import re
 # from constants import chart_sar_pairs
 
-# chart_folder = 'FTP_data/rasterised_shapefiles'
-# sar_folder = 'FTP_data/dual_band_images'
-# output_folder = 'Tiled_images'
+# chart_folder = "FTP_data/rasterised_shapefiles"
+# sar_folder = "FTP_data/dual_band_images"
+# output_folder = "Tiled_images"
 
-# ex_chart_image = load_raster(chart_folder + '/' + chart_sar_pairs[0][0] + '.tiff', default_name='Ice Chart')
+# ex_chart_image = load_raster(chart_folder + "/" + chart_sar_pairs[0][0] + ".tiff", default_name="Ice Chart")
 # ex_chart_image = ex_chart_image.reindex(y=ex_chart_image.y[::-1])
-# ex_sar_image = load_raster(sar_folder + '/' + chart_sar_pairs[0][1] + '.tif', default_name='SAR Image')
+# ex_sar_image = load_raster(sar_folder + "/" + chart_sar_pairs[0][1] + ".tif", default_name="SAR Image")
 # region_prefix = chart_sar_pairs[0][2]
-# name_extract = re.findall('H_[0-9]{8}T',chart_sar_pairs[0][1])[0][2:10]
+# name_extract = re.findall("H_[0-9]{8}T",chart_sar_pairs[0][1])[0][2:10]
 # print(f"\nTiling {name_extract} ...")
 # tile_raster(ex_sar_image, ex_chart_image, output_folder, name_extract, region_prefix, size_x=256, size_y=256)
