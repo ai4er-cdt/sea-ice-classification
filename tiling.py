@@ -4,14 +4,14 @@ AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
 
-import xarray  as xr
+import xarray as xr
 import rioxarray as rxr
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 
 
-def load_raster(file_path: str, parse_coordinates: bool=True, masked: bool=True, default_name: str=None, crs: int=4326) -> DataArray:
-
+def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
+                crs: int = 4326) -> DataArray:
     """
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
 
@@ -26,19 +26,19 @@ def load_raster(file_path: str, parse_coordinates: bool=True, masked: bool=True,
                     raster (xarray.core.dataarray.DataArray): DataArray from file
     """
 
-    raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, masked=masked, default_name=default_name)
+    raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, masked=masked,
+                               default_name=default_name)
 
-    assert type(raster) == xr.core.dataarray.DataArray # Makes sure the data structure is DataArray
-    raster.rio.write_crs(crs, inplace=True) # Modifies CRS of the raster
+    assert type(raster) == xr.core.dataarray.DataArray  # Makes sure the data structure is DataArray
+    raster.rio.write_crs(crs, inplace=True)  # Modifies CRS of the raster
 
     return raster
 
 
 def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, basename: str, region_prefix: str,
-                size_x: int=256, size_y: int=256, start_x: int=0, start_y: int=0,
-                end_x: int=None, end_y: int=None, stride_x: int=128, stride_y: int=128,
-                nan_threshold: float=1.0) -> tuple[int,int]:
-
+                size_x: int = 256, size_y: int = 256, start_x: int = 0, start_y: int = 0,
+                end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128,
+                nan_threshold: float = 1.0) -> tuple[int, int]:
     """
     Slices a given pair of source images using a moving window, outputs valid tiles / sub-images to disk
     Invalid tile pairs are skipped, e.g. where one or more of the pair contains an unacceptable number of NaN values
@@ -94,8 +94,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     Path.mkdir(Path(f"{output_folder}/{features_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{labels_subfolder}"), parents=True, exist_ok=True)
 
-    img_n = 0 # Counter for image pairs generated (+1 for file naming convention)
-    discarded_tiles = 0 # Counter for discarded tile pairs
+    img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
+    discarded_tiles = 0  # Counter for discarded tile pairs
 
     # Iterates over rows and columns of both images according to input parameters
     for row in range(start_y, end_y, stride_y):
@@ -106,20 +106,20 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             sub_chart = ice_chart[:, row:row + size_y, col:col + size_x]
 
             # Checks if the current tile has the same shape as the parameters, if not it skips to the next tile
-            if (sub_sar.shape[1] * sub_sar.shape[2] != size_x * size_y) or (sub_chart.shape[1] * sub_chart.shape[2] != size_x * size_y):
-                
+            if (sub_sar.shape[1] * sub_sar.shape[2] != size_x * size_y) or (
+                    sub_chart.shape[1] * sub_chart.shape[2] != size_x * size_y):
                 continue
 
             # NaN Check: Skip to next pair if too many NaNs in either tile
             # TBC: Only checks first two layers of SAR tile (i.e. ignores incidence angle)
-            if (sub_chart.isnull().sum().values / (size_x*size_y) >= nan_threshold
-                    or sub_sar[0,:,:].isnull().sum().values / (size_x*size_y) >= nan_threshold
-                    or sub_sar[1,:,:].isnull().sum().values / (size_x*size_y) >= nan_threshold):
+            if (sub_chart.isnull().sum().values / (size_x * size_y) >= nan_threshold
+                    or sub_sar[0, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold
+                    or sub_sar[1, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold):
                 discarded_tiles += 1
                 continue
 
             # Majority of filename is common to both sar and ice tiles
-            file_n = "{:0>5}".format(img_n+1)
+            file_n = "{:0>5}".format(img_n + 1)
             common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
 
             # Separate by subfolder and prefix
@@ -132,11 +132,10 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
             img_n += 1
 
-    print (f"Number of image pairs generated: {img_n}")
-    print (f"Number of discarded tile pairs: {discarded_tiles}")
+    print(f"Number of image pairs generated: {img_n}")
+    print(f"Number of discarded tile pairs: {discarded_tiles}")
 
     return img_n, discarded_tiles
-
 
 # # EXAMPLE
 # import re
