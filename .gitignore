@@ -3,3 +3,5 @@ data_path.config
 # ignore wandb logs
 wandb/
 sea-ice-gtc/
+# ignore pycharm folders
+.idea/
