@@ -1,32 +1,32 @@
+
 """
 AI4ER GTC - Sea Ice Classification
-
 Functions for loading and tiling of raster files
 """
-import os
 
+import re
 import xarray as xr
 import rioxarray as rxr
-import re
 from xarray.core.dataarray import DataArray
 from pathlib import Path
-from constants import chart_sar_pairs
+from timeit import default_timer 
 
 
 def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
                 crs: int = 4326) -> DataArray:
+    
     """
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
 
-            Parameters:
-                    file_path (str): Path to file
-                    parse_coordinates (bool): Parses the coordinates of the file, if any
-                    masked (bool): Reads raster as a mask
-                    default_name (str): Name for the array
-                    crs (int): Coordinate Reference System
+        Parameters:
+            file_path (str): Path to file
+            parse_coordinates (bool): Parses the coordinates of the file, if any
+            masked (bool): Reads raster as a mask
+            default_name (str): Name for the array
+            crs (int): Coordinate Reference System
 
-            Returns:
-                    raster (xarray.core.dataarray.DataArray): DataArray from file
+        Returns:
+            raster (xarray.core.dataarray.DataArray): DataArray from file
     """
 
     raster = rxr.open_rasterio(Path(file_path), parse_coordinates=parse_coordinates, masked=masked,
@@ -42,33 +42,36 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 size_x: int = 256, size_y: int = 256, start_x: int = 0, start_y: int = 0,
                 end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128,
                 nan_threshold: float = 1.0) -> tuple[int, int]:
+    
     """
-    Slices a given pair of source images using a moving window, outputs valid tiles / sub-images to disk
-    Invalid tile pairs are skipped, e.g. where one or more of the pair contains an unacceptable number of NaN values
+    Slices a given pair of source images using a moving window
+    Outputs valid sar and ice chart tiles to disk
+    Also outputs a binary mask corresponding to each ice chart tile (1 = ice, 0 = water)
+    Invalid tile pairs are skipped, e.g. due to NaN or values out of range
 
-            Parameters:
-                    sar_image (xarray.core.dataarray.DataArray): Original SAR image to be tiled
-                    ice_chart (xarray.core.dataarray.DataArray): Corresponding rasterised ice chart to be tiled
-                    output_folder (str): Path to folder where tiled images will be saved
-                    basename (str): Base name for saved files
-                    region_prefix (str): 2-character prefix indicating geographical region of the source files
-                        e.g. 'WS' = (East) Weddell Sea region, 'AP' = Antarctic Peninsula region
-                    size_x (int): Tile size in the horizontal axis
-                    size_y (int): Tile size in the vertical axis
-                    start_x (int): Starting coordinate for tiling in the horizontal axis
-                    start_y (int): Starting coordinate for tiling in the vertical axis
-                    end_x (int): Final coordinate for tiling in the horizontal axis
-                    end_y (int): Final coordinate for tiling in the vertical axis
-                    stride_x (int): Stride of the moving window in the horizontal axis
-                    stride_y (int): Stride of the moving window in the vertical axis
-                    nan_threshold (float): number in [0,1]
+        Parameters:
+            sar_image (xarray.core.dataarray.DataArray): Original SAR image to be tiled
+            ice_chart (xarray.core.dataarray.DataArray): Corresponding rasterised ice chart to be tiled
+            output_folder (str): Path to folder where tiled images will be saved
+            basename (str): Base name for saved files
+            region_prefix (str): 2-character prefix indicating geographical region of the source files
+                e.g. 'WS' = (East) Weddell Sea region, 'AP' = Antarctic Peninsula region
+            size_x (int): Tile size in the horizontal axis
+            size_y (int): Tile size in the vertical axis
+            start_x (int): Starting coordinate for tiling in the horizontal axis
+            start_y (int): Starting coordinate for tiling in the vertical axis
+            end_x (int): Final coordinate for tiling in the horizontal axis
+            end_y (int): Final coordinate for tiling in the vertical axis
+            stride_x (int): Stride of the moving window in the horizontal axis
+            stride_y (int): Stride of the moving window in the vertical axis
+            nan_threshold (float): number in [0,1]
 
-            Returns:
-                    img_n (int): Number of image / tile pairs generated
-                    discared_tiles (int): Number of tile pairs discarded
+        Returns:
+            img_n (int): Number of image / tile pairs generated
+            discared_tiles (int): Number of tile pairs discarded
     """
 
-    # Standard output config
+    # Output config
     sar_subfolder = "sar"
     chart_subfolder = "chart"
     binary_subfolder = "binary_chart"
@@ -110,11 +113,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             sub_sar = sar_image[:, row:row + size_y, col:col + size_x]
             sub_chart = ice_chart[:, row:row + size_y, col:col + size_x]
 
-            # Make a copy of the chart and set to binary classification objective
-            sub_binary = sub_chart.copy()
-            sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
-            sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
-
             # Checks if the current tile has the same shape as the parameters, if not it skips to the next tile
             if (sub_sar.shape[1] * sub_sar.shape[2] != size_x * size_y) or (
                     sub_chart.shape[1] * sub_chart.shape[2] != size_x * size_y):
@@ -132,7 +130,12 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 discarded_tiles += 1
                 continue
 
-            # Majority of filename is common to both sar and ice tiles
+            # Make a copy of the chart and set to binary classification objective
+            sub_binary = sub_chart.copy()
+            sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
+            sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
+
+            # Majority of filename is common to both sar and chart tiles
             file_n = "{:0>5}".format(img_n + 1)
             common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
 
@@ -156,18 +159,57 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
 if __name__ == "__main__":
 
-    base_folder = open("data_path.config").read()
-    chart_folder = "FTP_data/rasterised_shapefiles"
-    sar_folder = "FTP_data/dual_band_images"
-    output_folder = "Tiled_images"
+    """
+    Runs loading and tiling of image pairs
 
-    n_files_to_process = 2
+    The following files must exist in the working directory: 
+
+    data_path.config: 
+        Specifies the path of the local data folder
+        this will vary from system to system
+
+    constants.py: 
+        Contains a list of the image pairs to be processed
+        as well as associated metadata such as geographical region
+
+    """
+
+    # User config
+    n_pairs_to_process = 2
+    output_folder = "../Tiled_images"
+    resolution = 256
+    stride = 128
+    flip_charts = True  # ice charts may need vertical flip before tiling
+
+    # Standard config 
+    base_folder = open("data_path.config").read()
+    chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
+    sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
+    chart_ext = "tiff"; sar_ext = "tif"
+
+    # Prepare to run
+    t_start = default_timer()
+    total_img = 0; 
+    total_discarded = 0  
+
+    # Run loading and tiling of image pairs
+    from constants import chart_sar_pairs
     for i, (chart_name, sar_name, region) in enumerate(chart_sar_pairs):
-        if i >= n_files_to_process:
+        if i >= n_pairs_to_process:
             break
-        chart_image = load_raster(f"{base_folder}/{chart_folder}/{chart_name}.tiff", default_name="Ice Chart")
-        chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
-        sar_image = load_raster(f"{base_folder}/{sar_folder}/{sar_name}.tif", default_name="SAR Image")
-        name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]
+        chart_image = load_raster(Path(f"{chart_folder}/{chart_name}.{chart_ext}"), default_name="Ice Chart")
+        if flip_charts == True:
+            chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
+        sar_image = load_raster(Path(f"{sar_folder}/{sar_name}.{sar_ext}"), default_name="SAR Image")
+        name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]  # use sar date as identifier for all outputs
         print(f"Tiling {name_extract} ...")
-        tile_raster(sar_image, chart_image, output_folder, name_extract, region, size_x=256, size_y=256)
+        img_n, discarded_tiles = tile_raster(sar_image, chart_image, Path(output_folder), name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
+        total_img += img_n; total_discarded += discarded_tiles
+
+    print("TILING COMPLETE\n")
+    print(f"Total image pairs generated: {total_img}")
+    print(f"Total discarded tile pairs: {total_discarded}")
+    print(f"Proportion discarded: {total_discarded/(total_img+total_discarded)}")
+
+    t_end = default_timer()
+    print(f"Execution time: {(t_end - t_start)/60.0} minutes for {n_pairs_to_process} pairs of source images")
