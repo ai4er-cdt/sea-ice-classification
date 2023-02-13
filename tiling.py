@@ -103,7 +103,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
 
-
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
 
