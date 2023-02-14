@@ -1,3 +1,4 @@
 # data path is particular to each local environment
 data_path.config
 __pycache__/
+.idea/
