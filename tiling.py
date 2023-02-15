@@ -5,10 +5,13 @@ Functions for loading and tiling of raster files
 """
 
 import re
+import numpy as np
+import pandas as pd
 import xarray as xr
 import rioxarray as rxr
 from xarray.core.dataarray import DataArray
 from pathlib import Path
+from datetime import datetime
 from timeit import default_timer 
 
 
@@ -105,6 +108,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
+    info_lst = [] # Empty list to be filled with each tile info
 
     # Iterates over rows and columns of both images according to input parameters
     for row in range(start_y, end_y, stride_y):
@@ -144,7 +148,19 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
             pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
-
+            
+            # Save tile info in a dictionary
+            unique, counts = np.unique(chart_image, return_counts=True)
+            info = dict(zip(unique.astype('str'), counts))
+            info['region'] = region_prefix
+            info['basename'] = basename
+            info['file_n'] = file_n
+            info['size'] = size_x
+            info['col'] = col
+            info['row'] = row
+            
+            info_lst.append(info)
+            
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
@@ -155,8 +171,27 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     print(f"Number of image pairs generated: {img_n}")
     print(f"Number of discarded tile pairs: {discarded_tiles}")
 
-    return img_n, discarded_tiles
+    return img_n, discarded_tiles, info_lst
 
+def create_tile_info_dataframe(lst: list, pathout_csv: str) -> pd.DataFrame:
+    
+    """
+    Creates and saves tile information in tabular format 
+
+        Parameters:
+            lst (list): A list of dictionaries containing tile information
+            pathout_csv (str): Path to file
+            
+
+        Returns:
+            df (pd.DataFrame): a DataFrame with the information of each tile 
+    """
+    
+    df = pd.DataFrame(lst).fillna(0)
+
+    df.to_csv(pathout_csv + '.csv', index=False)
+    
+    return df
 
 if __name__ == "__main__":
 
@@ -187,11 +222,13 @@ if __name__ == "__main__":
     chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
     sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
     chart_ext = "tiff"; sar_ext = "tif"
-
+    pathout_csv = '../tile_info_' + datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
+    
     # Prepare to run
     t_start = default_timer()
     total_img = 0; 
     total_discarded = 0  
+    total_info = []
 
     # Run loading and tiling of image pairs
     from constants import chart_sar_pairs
@@ -204,9 +241,12 @@ if __name__ == "__main__":
         sar_image = load_raster(Path(f"{sar_folder}/{sar_name}.{sar_ext}"), default_name="SAR Image")
         name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]  # use sar date as identifier for all outputs
         print(f"Tiling {name_extract} ...")
-        img_n, discarded_tiles = tile_raster(sar_image, chart_image, Path(output_folder), name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
+        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, Path(output_folder), name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
         total_img += img_n; total_discarded += discarded_tiles
+        total_info.extend(info_lst)
 
+    create_tile_info_dataframe(total_info, Path(pathout_csv))
+    
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
     print(f"Total discarded tile pairs: {total_discarded}")
