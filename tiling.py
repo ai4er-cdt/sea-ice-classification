@@ -148,7 +148,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
             pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
-            
+
             # Save tile info in a dictionary
             unique, counts = np.unique(chart_image, return_counts=True)
             info = dict(zip(unique.astype('str'), counts))
@@ -173,23 +173,26 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     return img_n, discarded_tiles, info_lst
 
-def create_tile_info_dataframe(lst: list, pathout_csv: str) -> pd.DataFrame:
+def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     
     """
     Creates and saves tile information in tabular format 
 
         Parameters:
             lst (list): A list of dictionaries containing tile information
-            pathout_csv (str): Path to file
+            output_folder (str): Path to folder where the csv will be saved
             
 
         Returns:
             df (pd.DataFrame): a DataFrame with the information of each tile 
     """
     
+    now = datetime.now().strftime("%d%m%YT%H%M%S")
+    
     df = pd.DataFrame(lst).fillna(0)
-
-    df.to_csv(pathout_csv + '.csv', index=False)
+    csv_file = f'{output_folder}/tile_info_{now}.csv'
+    
+    df.to_csv(csv_file, index=False)
     
     return df
 
@@ -222,7 +225,6 @@ if __name__ == "__main__":
     chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
     sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
     chart_ext = "tiff"; sar_ext = "tif"
-    pathout_csv = '../tile_info_' + datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
     
     # Prepare to run
     t_start = default_timer()
@@ -245,7 +247,7 @@ if __name__ == "__main__":
         total_img += img_n; total_discarded += discarded_tiles
         total_info.extend(info_lst)
 
-    create_tile_info_dataframe(total_info, Path(pathout_csv))
+    create_tile_info_dataframe(total_info, Path(output_folder))
     
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
