@@ -150,7 +150,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
             # Save tile info in a dictionary
-            unique, counts = np.unique(chart_image, return_counts=True)
+            unique, counts = np.unique(sub_chart, return_counts=True)
             info = dict(zip(unique.astype('str'), counts))
             info['region'] = region_prefix
             info['basename'] = basename
