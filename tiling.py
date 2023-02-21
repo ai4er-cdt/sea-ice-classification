@@ -173,6 +173,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     return img_n, discarded_tiles, info_lst
 
+
 def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     
     """
@@ -196,6 +197,7 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     
     return df
 
+
 if __name__ == "__main__":
 
     """
@@ -214,7 +216,7 @@ if __name__ == "__main__":
     """
 
     # User config
-    n_pairs_to_process = 2
+    n_pairs_to_process = 20
     output_folder = "../Tiled_images"
     resolution = 256
     stride = 128
@@ -224,12 +226,13 @@ if __name__ == "__main__":
     base_folder = open("data_path.config").read()
     chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
     sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
-    chart_ext = "tiff"; sar_ext = "tif"
+    chart_ext = "tiff"
+    sar_ext = "tif"
     
     # Prepare to run
     t_start = default_timer()
-    total_img = 0; 
-    total_discarded = 0  
+    total_img = 0
+    total_discarded = 0
     total_info = []
 
     # Run loading and tiling of image pairs
