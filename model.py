@@ -42,14 +42,14 @@ class Segmentation(pl.LightningModule):
         :param batch_idx: Index of batch
         :return: Loss from this batch of data for use in backprop
         """
-        x, y = batch["sar"], batch["chart"]
+        x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch["sar"], batch["chart"]
+        x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         metric = self.metric(y_hat, y)
@@ -58,7 +58,7 @@ class Segmentation(pl.LightningModule):
         return loss
 
     def testing_step(self, batch, batch_idx):
-        x, y = batch["sar"], batch["chart"]
+        x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         metric = self.metric(y_hat, y)
