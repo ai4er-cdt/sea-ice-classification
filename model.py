@@ -52,7 +52,8 @@ class Segmentation(pl.LightningModule):
         x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
-        metric = self.metric(y_hat, y)
+        y_hat_pred = y_hat.argmax(dim=1)
+        metric = self.metric(y_hat_pred, y)
         self.log("val_loss", loss)
         self.log("val_metric", metric)
         return loss
@@ -61,7 +62,8 @@ class Segmentation(pl.LightningModule):
         x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
-        metric = self.metric(y_hat, y)
+        y_hat_pred = y_hat.argmax(dim=1)
+        metric = self.metric(y_hat_pred, y)
         self.log("test_loss", loss)
         self.log("test_metric", metric)
 
