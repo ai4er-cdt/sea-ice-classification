@@ -8,6 +8,7 @@ from util import SeaIceDataset
 from pathlib import Path
 from model import Segmentation, UNet
 from torchmetrics import JaccardIndex  # may be called Jaccard Index in newer versions of torchmetrics
+# import segmentation_models_pytorch as smp
 
 
 if __name__ == '__main__':
@@ -16,6 +17,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Sea Ice Segmentation")
     parser.add_argument("--name", default="seaice", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str, help="Name of model to train")
+    #parser.add_argument("--model", default="unet", type=str, choices=["unet", "densenet"], help="Name of model to train", required = True)
     parser.add_argument('--gpu_id', default=-1, type=int, help="GPU id to train on")
     parser.add_argument('--n_filters', default=16, type=float, help="Number of convolutional filters in hidden layer")
     parser.add_argument('--learning_rate', default=0.05, type=float, help="Learning rate")
@@ -29,7 +31,7 @@ if __name__ == '__main__':
         args.device = 'cpu'
 
     pl.seed_everything(args.seed)
-
+    
     base_folder = open("data_path.config").read().strip()
     chart_folder = Path(f"../Tiled_images/binary_chart")
     sar_folder = Path(f"../Tiled_images/sar")
@@ -67,6 +69,8 @@ if __name__ == '__main__':
     # configure model
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=2)
+    #elif args.model == "densenet":
+    #    model = smp.Unet('densenet201', encoder_weights='imagenet', n_channels=3, n_classes=2)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
