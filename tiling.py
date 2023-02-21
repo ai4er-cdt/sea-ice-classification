@@ -1,4 +1,3 @@
-
 """
 AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
