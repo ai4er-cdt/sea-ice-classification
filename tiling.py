@@ -3,7 +3,7 @@
 AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
-
+import os
 import re
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = T
 def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, basename: str, region_prefix: str,
                 size_x: int = 256, size_y: int = 256, start_x: int = 0, start_y: int = 0,
                 end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128,
-                nan_threshold: float = 1.0) -> tuple[int, int, list]:
+                nan_threshold: float = 0.0) -> tuple[int, int, list]:
     
     """
     Slices a given pair of source images using a moving window
@@ -126,10 +126,10 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
             # NaN Check: Skip to next pair if too many NaNs in either tile
             # Range Check: Make sure all values are between 0 and 100
-            # TBC: Only checks first two layers of SAR tile (i.e. ignores incidence angle)
-            if (sub_chart.isnull().sum().values / (size_x * size_y) >= nan_threshold
-                    or sub_sar[0, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold
-                    or sub_sar[1, :, :].isnull().sum().values / (size_x * size_y) >= nan_threshold
+            if (sub_chart.isnull().sum().values / (size_x * size_y) > nan_threshold
+                    or sub_sar[0, :, :].isnull().sum().values / (size_x * size_y) > nan_threshold
+                    or sub_sar[1, :, :].isnull().sum().values / (size_x * size_y) > nan_threshold
+                    or sub_sar[2, :, :].isnull().sum().values / (size_x * size_y) > nan_threshold
                     or sub_chart[0, :, :].values.min() < 0
                     or sub_chart[0, :, :].values.max() > 100
             ):
