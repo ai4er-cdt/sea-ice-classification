@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import rioxarray
 from skimage import io
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -11,17 +12,24 @@ class SeaIceDataset(Dataset):
     Inspired by https://pytorch.org/tutorials/beginner/data_loading_tutorial.html.
     """
 
-    def __init__(self, sar_path: str, chart_path: str, transform: transforms = None):
+    def __init__(self,
+                 sar_path: str,
+                 sar_files: list[str],
+                 chart_path: str,
+                 chart_files: list[str],
+                 transform: transforms = None):
         """
         Constructs a SeaIceDataset.
-        :param sar_path: Path to the source folder of SAR images
-        :param chart_path: Path to the source folder of corresponding chart labels
+        :param sar_path: Base folder path of SAR images
+        :param sar_files: List of filenames of SAR images
+        :param chart_path: Base folder path of charts
+        :param chart_files: List of filenames of charts
         :param transform: Callable transformation to apply to images upon loading
         """
         self.sar_path = sar_path
-        self.sar_files = os.listdir(self.sar_path)
+        self.sar_files = sar_files
         self.chart_path = chart_path
-        self.chart_files = os.listdir(self.chart_path)
+        self.chart_files = chart_files
         self.transform = transform
 
     def __len__(self):
@@ -41,10 +49,8 @@ class SeaIceDataset(Dataset):
         """
         sar_name = os.path.join(self.sar_path, self.sar_files[i])
         chart_name = os.path.join(self.chart_path, self.chart_files[i])
-        sar = io.imread(sar_name).copy()  # take all bands for shape of 256 x 256 x 3
-        chart = io.imread(chart_name).copy()[:, :, 0]  # take red band only for shape of 256 x 256 x 1
-        chart[chart < 80] = 0  # binarise to water
-        chart[chart >= 80] = 255  # binarise to ice
+        sar = rioxarray.open_rasterio(sar_name, masked=True).values  # take all bands for shape of 256 x 256 x 3
+        chart = rioxarray.open_rasterio(chart_name, masked=True).values  # take binary array of shape 256 x 256
         sample = {"sar": sar, "chart": chart}
         if self.transform:
             sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
