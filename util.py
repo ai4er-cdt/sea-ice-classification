@@ -1,7 +1,5 @@
-import os
 import matplotlib.pyplot as plt
 import rioxarray
-from skimage import io
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -47,8 +45,8 @@ class SeaIceDataset(Dataset):
         :param i: Index of which image pair to fetch
         :return: Dictionary with SAR and chart pair
         """
-        sar_name = os.path.join(self.sar_path, self.sar_files[i])
-        chart_name = os.path.join(self.chart_path, self.chart_files[i])
+        sar_name = f"{self.sar_path}/{self.sar_files[i]}"
+        chart_name = f"{self.chart_path}/{self.chart_files[i]}"
         sar = rioxarray.open_rasterio(sar_name, masked=True).values  # take all bands for shape of 256 x 256 x 3
         chart = rioxarray.open_rasterio(chart_name, masked=True).values  # take binary array of shape 256 x 256
         sample = {"sar": sar, "chart": chart}
