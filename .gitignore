@@ -7,3 +7,5 @@ sea-ice-gtc/
 .idea/
 __pycache__/
 .idea/
+# ignore model checkpoint files
+*.ckpt
