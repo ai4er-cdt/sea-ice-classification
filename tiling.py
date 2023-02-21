@@ -12,7 +12,8 @@ import rioxarray as rxr
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 from datetime import datetime
-from timeit import default_timer 
+from timeit import default_timer
+from argparse import ArgumentParser
 
 
 def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
@@ -44,7 +45,7 @@ def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = T
 def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, basename: str, region_prefix: str,
                 size_x: int = 256, size_y: int = 256, start_x: int = 0, start_y: int = 0,
                 end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128,
-                nan_threshold: float = 1.0) -> tuple[int, int]:
+                nan_threshold: float = 1.0) -> tuple[int, int, list]:
     
     """
     Slices a given pair of source images using a moving window
@@ -108,7 +109,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
-    info_lst = [] # Empty list to be filled with each tile info
+    info_lst = []  # Empty list to be filled with each tile info
 
     # Iterates over rows and columns of both images according to input parameters
     for row in range(start_y, end_y, stride_y):
@@ -215,15 +216,19 @@ if __name__ == "__main__":
 
     """
 
+    parser = ArgumentParser(description="Sea Ice Tiling")
+    parser.add_argument("--n_pairs", default=1, type=int, help="Number of pairs to process")
+    args = parser.parse_args()
+
     # User config
-    n_pairs_to_process = 20
+    n_pairs_to_process = args.n_pairs
     output_folder = "../Tiled_images"
     resolution = 256
     stride = 128
     flip_charts = True  # ice charts may need vertical flip before tiling
 
     # Standard config 
-    base_folder = open("data_path.config").read()
+    base_folder = open("data_path.config").read().strip()
     chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
     sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
     chart_ext = "tiff"
@@ -240,17 +245,17 @@ if __name__ == "__main__":
     for i, (chart_name, sar_name, region) in enumerate(chart_sar_pairs):
         if i >= n_pairs_to_process:
             break
-        chart_image = load_raster(Path(f"{chart_folder}/{chart_name}.{chart_ext}"), default_name="Ice Chart")
+        chart_image = load_raster(str(Path(f"{chart_folder}/{chart_name}.{chart_ext}")), default_name="Ice Chart")
         if flip_charts == True:
             chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
-        sar_image = load_raster(Path(f"{sar_folder}/{sar_name}.{sar_ext}"), default_name="SAR Image")
+        sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.{sar_ext}")), default_name="SAR Image")
         name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]  # use sar date as identifier for all outputs
         print(f"Tiling {name_extract} ...")
-        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, Path(output_folder), name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
+        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
         total_img += img_n; total_discarded += discarded_tiles
         total_info.extend(info_lst)
 
-    create_tile_info_dataframe(total_info, Path(output_folder))
+    create_tile_info_dataframe(total_info, output_folder)
     
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
