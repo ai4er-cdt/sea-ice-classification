@@ -5,3 +5,5 @@ wandb/
 sea-ice-gtc/
 # ignore pycharm folders
 .idea/
+__pycache__/
+.idea/

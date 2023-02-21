@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # Sea Ice Classification
 
 This repo contains the code for the Sea Ice Classification Challenge from the 2022-23 cohort of AI4ER at the University of Cambridge.
