@@ -199,6 +199,30 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     return df
 
 
+def construct_train_val_test():
+    """
+    Construct train/val/test set splits with filenames into CSVs based on tile_info CSVs
+    """
+    tile_directory = "../Tiled_images"
+    tile_info_csvs = [f for f in os.listdir(tile_directory) if ".csv" in f]
+    train, test = [], []
+    for filename in tile_info_csvs:
+        table = pd.read_csv(f"../Tiled_images/{filename}")
+        for i, row in table.iterrows():
+            if row["region"] == "AP":  # TODO: reconsider whether to train on WS
+                train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
+            else:  # TODO: reconsider whether to test on AP
+                test.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
+    n_train = int(0.8 * len(train))
+    train, val = train[:n_train], train[n_train:]
+    with open(f"{tile_directory}/train_files.txt", "w") as f:
+        f.write("\n".join(train))
+    with open(f"{tile_directory}/val_files.txt", "w") as f:
+        f.write("\n".join(val))
+    with open(f"{tile_directory}/test_files.txt", "w") as f:
+        f.write("\n".join(test))
+
+
 if __name__ == "__main__":
 
     """
@@ -256,6 +280,7 @@ if __name__ == "__main__":
         total_info.extend(info_lst)
 
     create_tile_info_dataframe(total_info, output_folder)
+    construct_train_val_test()
     
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
