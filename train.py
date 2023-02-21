@@ -32,6 +32,7 @@ if __name__ == '__main__':
 
     pl.seed_everything(args.seed)
     
+    ## TO DO: when we move to JASMIN - remove base_folder variable (only needed for running on our local machines with OneDrive) ##
     base_folder = open("data_path.config").read().strip()
     chart_folder = Path(f"../Tiled_images/binary_chart")
     sar_folder = Path(f"../Tiled_images/sar")
