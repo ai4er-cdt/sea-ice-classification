@@ -45,6 +45,7 @@ if __name__ == '__main__':
                                   chart_files=train_chart_files,
                                   transform=None)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
+    #train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4, shuffle=True)
 
     # TODO: read in val files from csv somewhere
     val_sar_files = ["SAR_AP_20181202_00052_[9856,256]_256x256.tiff", "SAR_AP_20181202_00053_[9984,256]_256x256.tiff"]
