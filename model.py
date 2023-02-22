@@ -10,8 +10,6 @@ class Segmentation(pl.LightningModule):
     """
 
     def __init__(self,
-                 train_dataloader: DataLoader,
-                 val_dataloader: DataLoader,
                  model: nn.Module,
                  criterion: callable,
                  learning_rate: float,
@@ -20,20 +18,25 @@ class Segmentation(pl.LightningModule):
         """
         Construct a Segmentation LightningModule.
         Note that we keep hyperparameters separate from dataloaders to prevent data leakage at test time.
-        :param train_dataloader: Dataloader with training data, left as None at test time
-        :param val_dataloader: Dataloader with validation data, left as None at test time
         :param model: PyTorch model
         :param criterion: PyTorch loss function against which to train model
         :param learning_rate: Float learning rate for our optimiser
         :param metric: PyTorch function for model evaluation
         """
         super().__init__()
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
         self.model = model
         self.criterion = criterion
         self.learning_rate = learning_rate
         self.metric = metric
+        self.save_hyperparameters()
+
+    def forward(self, x):
+        """
+        Implement forward function.
+        :param x: Inputs to model.
+        :return: Outputs of model.
+        """
+        return self.model(x)
 
     def training_step(self, batch: dict, batch_idx: int):
         """
