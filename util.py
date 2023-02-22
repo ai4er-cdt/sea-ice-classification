@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import rioxarray
 from torch.utils.data import Dataset
 from torchvision import transforms
+from pytorch_lightning import Callback
 
 
 class SeaIceDataset(Dataset):
@@ -66,3 +67,48 @@ class SeaIceDataset(Dataset):
         ax[1].imshow(sample["chart"])
         plt.tight_layout()
         plt.show()
+
+
+class Visualise(Callback):
+    """
+    Callback to visualise input/output samples and predictions.
+    """
+    def __init__(self, val_dataloader, n_to_show=5):
+        """
+        Construct callback object.
+        :param val_dataloader: Validation dataloader to use when visualising outputs
+        :param n_to_show: How many images to show
+        """
+        self.val_dataloader = val_dataloader
+        self.n_to_show = n_to_show
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        """
+        Callback to run on valiation epoch start.
+        :param trainer: PyTorch Lightining Trainer class instance
+        :param pl_module: PyTorch Lightning Module class instance
+        """
+        for batch in self.val_dataloader:
+            x, y = batch["sar"], batch["chart"].squeeze().long()
+            keep = y.sum(dim=[1, 2]) > 0  # keep only images with both classes
+            x, y = x[keep], y[keep]
+            x, y = x[:self.n_to_show], y[:self.n_to_show]  # keep only the first few images if there are more
+            y_hat = pl_module(x)
+            y_hat_pred = y_hat.argmax(dim=1)
+            fig, ax = plt.subplots(self.n_to_show, 5, figsize=(15, self.n_to_show*3))
+            for i in range(self.n_to_show):
+                a = x[i].detach().cpu().numpy().transpose(1, 2, 0)
+                ax[i, 0].imshow(a[:, :, 0])
+                ax[i, 0].set_title("SAR Band 1")
+                ax[i, 1].imshow(a[:, :, 1])
+                ax[i, 1].set_title("SAR Band 2")
+                ax[i, 2].imshow(a[:, :, 2])
+                ax[i, 2].set_title("SAR Band 3")
+                ax[i, 3].imshow(y_hat_pred[i].detach().cpu().numpy())
+                ax[i, 3].set_title("Prediction")
+                ax[i, 4].imshow(y[i].detach().cpu().numpy())
+                ax[i, 4].set_title("Truth")
+            plt.tight_layout()
+            wandb_logger = trainer.logger.experiment
+            wandb_logger.log({"val_image": fig})
+            break  # only visualise from first batch
