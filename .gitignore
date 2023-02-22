@@ -2,7 +2,7 @@
 data_path.config
 # ignore wandb logs
 wandb/
-sea-ice-gtc/
+sea-ice-classification/
 # ignore pycharm folders
 .idea/
 __pycache__/
