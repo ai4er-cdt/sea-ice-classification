@@ -110,5 +110,10 @@ class Visualise(Callback):
                 ax[i, 4].set_title("Truth")
             plt.tight_layout()
             wandb_logger = trainer.logger.experiment
-            wandb_logger.log({"val_image": fig})
+            wandb_logger.log({"val_image": fig,
+                              "val_image_x": x,
+                              "val_image_y": y,
+                              "val_image_y_hat": y_hat,
+                              "val_image_y_hat_pred": y_hat_pred})
+            plt.savefig(f"{trainer.logger.log_dir}/fig/{trainer.global_step}.png")
             break  # only visualise from first batch
