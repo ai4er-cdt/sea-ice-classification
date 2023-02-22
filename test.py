@@ -7,15 +7,17 @@ from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from util import SeaIceDataset
 from model import Segmentation, UNet
-from torchmetrics import IoU  # may be called Jaccard Index in newer versions of torchmetrics
+from torchmetrics import JaccardIndex  # may be called Jaccard Index in newer versions of torchmetrics
 
 
 if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
-    parser.add_argument("--username", default="", type=str, help="wandb username")
-    parser.add_argument("--name", default="", type=str, help="Name of wandb run")
+    parser.add_argument("--username", default="andrewmcdonald", type=str, help="wandb username")
+    parser.add_argument("--name", default="3i9dp51u", type=str, help="Name of wandb run")
+    parser.add_argument("--batch_size", default=128, type=int, help="Batch size")
+    parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
     args = parser.parse_args()
 
     # wandb logging
@@ -24,7 +26,22 @@ if __name__ == "__main__":
     run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
 
     # configure dataloaders
-    test_dataset = SeaIceDataset(sar_path="./sar", chart_path="./chart", transform=None)
+    base_folder = "../Tiled_images"
+    sar_folder = f"{base_folder}/sar"
+    chart_folder = f"{base_folder}/binary_chart"
+    if args.overfit:
+        # load single train/val/test file and overfit
+        test_files = ["AP_20181202_00040_[9216,512]_256x256.tiff", "AP_20181202_00040_[9216,512]_256x256.tiff"]
+    else:
+        with open(f"{base_folder}/test_files.txt", "r") as f:
+            test_files = f.read().splitlines()
+    test_sar_files = [f"SAR_{f}" for f in test_files]
+    test_chart_files = [f"BINARY_CHART_{f}" for f in test_files]
+    test_dataset = SeaIceDataset(sar_path=sar_folder,
+                                 sar_files=test_sar_files,
+                                 chart_path=chart_folder,
+                                 chart_files=test_chart_files,
+                                 transform=None)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=4)
 
     # load model from best checkpoint
@@ -38,24 +55,22 @@ if __name__ == "__main__":
         if epoch > best_epoch:
             best_epoch = epoch
             best_checkpoint = f"{checkpoint_folder}/{checkpoint}"
-
-    if run.config["model"] == "unet":
-        model = UNet.load_from_checkpoint(best_checkpoint)
-    else:
-        raise ValueError("Unsupported model type")
+    model = Segmentation.load_from_checkpoint(best_checkpoint, model=UNet(kernel=3, n_channels=3, n_filters=run.config["n_filters"], n_classes=2))
 
     # test
     model.eval()
+    criterion = model.criterion
+    metric = JaccardIndex(task="binary")
     losses = []
     metrics = []
     for batch in test_dataloader:
-
-        x, y = batch["sar"], batch["chart"]
+        x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = model(x)
-        loss = model.get_criterion()(y_hat, y)
-        metric = IoU(num_classes=2)(y_hat, y)
+        loss = criterion(y_hat, y)
+        y_hat_pred = y_hat.argmax(dim=1)
+        metric_value = metric(y_hat_pred, y)
         losses.append(loss)
-        metrics.append(metric)
+        metrics.append(metric_value)
 
     # save and log test nll
     test_loss = sum(losses) / len(test_dataset)
