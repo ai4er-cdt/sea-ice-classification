@@ -89,7 +89,7 @@ class Visualise(Callback):
         :param pl_module: PyTorch Lightning Module class instance
         """
         for batch in self.val_dataloader:
-            x, y = batch["sar"], batch["chart"].squeeze().long()
+            x, y = batch["sar"].to(pl_module.device), batch["chart"].squeeze().long().to(pl_module.device)
             keep = y.sum(dim=[1, 2]) > 0  # keep only images with both classes
             x, y = x[keep], y[keep]
             x, y = x[:self.n_to_show], y[:self.n_to_show]  # keep only the first few images if there are more
