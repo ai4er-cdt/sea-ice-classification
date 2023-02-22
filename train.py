@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str, help="Name of model to train")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
+    parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
     parser.add_argument("--learning_rate", default=0.05, type=float, help="Learning rate")
     parser.add_argument("--batch_size", default=128, type=int, help="Batch size")
