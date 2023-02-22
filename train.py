@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
-    parser.add_argument("--batch_size", default=1024, type=int, help="Batch size")
+    parser.add_argument("--batch_size", default=256, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=100, type=int, help="Number of epochs to fine-tune")
     parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
     parser.add_argument("--precision", default=32, type=int, help="Precision for training. Options are 32 or 16")
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     if args.overfit:
         # load single train/val/test file and overfit
-        train_files = val_files = test_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * 5
+        train_files = val_files = test_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
         args.max_epochs = 1000
     else:
         with open(f"{base_folder}/train_files.txt", "r") as f:
