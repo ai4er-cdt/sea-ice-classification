@@ -3,11 +3,13 @@ AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
 import os
+import random
 import re
 import numpy as np
 import pandas as pd
 import xarray as xr
 import rioxarray as rxr
+from random import shuffle
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 from datetime import datetime
@@ -212,6 +214,8 @@ def construct_train_val_test():
                 train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
             else:  # TODO: reconsider whether to test on AP
                 test.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
+    random.seed(0)
+    shuffle(train)  # ensure our train/val split is reproducibly random
     n_train = int(0.8 * len(train))
     train, val = train[:n_train], train[n_train:]
     with open(f"{tile_directory}/train_files.txt", "w") as f:
