@@ -115,5 +115,5 @@ class Visualise(Callback):
                               "val_image_y": y,
                               "val_image_y_hat": y_hat,
                               "val_image_y_hat_pred": y_hat_pred})
-            plt.savefig(f"{trainer.logger.log_dir}/fig/{trainer.global_step}.png")
+            plt.savefig(f"{wandb_logger.dir}/{trainer.global_step}.png")
             break  # only visualise from first batch
