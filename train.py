@@ -13,19 +13,18 @@ if __name__ == '__main__':
 
     # parse command line arguments
     parser = ArgumentParser(description="Sea Ice Segmentation")
-    parser.add_argument("--name", default="seaice", type=str, help="Name of wandb run")
+    parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str, help="Name of model to train")
-    parser.add_argument('--gpu_id', default=-1, type=int, help="GPU id to train on")
-    parser.add_argument('--n_filters', default=16, type=float, help="Number of convolutional filters in hidden layer")
-    parser.add_argument('--learning_rate', default=0.05, type=float, help="Learning rate")
-    parser.add_argument('--batch_size', default=128, type=int, help="Batch size")
-    parser.add_argument('--max_epochs', default=15, type=int, help="Number of epochs to fine-tune")
-    parser.add_argument('--seed', default=0, type=int, help="Numpy random seed")
-    parser.add_argument('--precision', default=32, help="Precision for training. Options are 32 or 16")
-    args = parser.parse_args()
+    parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
+    parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
+    parser.add_argument("--learning_rate", default=0.05, type=float, help="Learning rate")
+    parser.add_argument("--batch_size", default=128, type=int, help="Batch size")
+    parser.add_argument("--max_epochs", default=15, type=int, help="Number of epochs to fine-tune")
+    parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
+    parser.add_argument("--precision", default=32, help="Precision for training. Options are 32 or 16")
+    parser.add_argument("--log_every_n_steps", default=10, help="How often to log during training")
 
-    if (args.gpu_id == -1):
-        args.device = 'cpu'
+    args = parser.parse_args()
 
     pl.seed_everything(args.seed)
 
