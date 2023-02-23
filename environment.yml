@@ -1,0 +1,20 @@
+name: sea-ice-classification
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - torchvision
+  - pytorch-cuda=11.7
+  - torchaudio
+  - pytorch
+  - numpy
+  - rioxarray
+  - matplotlib
+  - scikit-image
+  - wandb
+  - pandas
+  - pytorch-lightning
+  - torchmetrics
+  - pathlib
+  - xarray
+prefix: /home/users/arm99/miniconda3/envs/sea-ice-classification
