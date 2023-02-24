@@ -78,6 +78,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     # Output config
     sar_subfolder = "sar"
+    sar_band3_subfolder = "sar_band3"
     chart_subfolder = "chart"
     binary_subfolder = "binary_chart"
     sar_prefix = "SAR"
@@ -105,6 +106,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     # Create output dirs if they don't exist
     Path.mkdir(Path(f"{output_folder}/{sar_subfolder}"), parents=True, exist_ok=True)
+    Path.mkdir(Path(f"{output_folder}/{sar_band3_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
 
@@ -148,6 +150,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
             # Separate by subfolder and prefix
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
+            pathout_sar_band3 = f"{output_folder}/{sar_band3_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
             pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
@@ -162,11 +165,24 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             info['row'] = row
             
             info_lst.append(info)
-            
+
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
             sub_binary.rio.to_raster(Path(pathout_binary))
+
+            ### Update band 3 in sar images and save to new folder ###
+            # Calculate the ratio of the HH/HV bands
+            band1 = sub_sar.sel(band=1)
+            band2 = sub_sar.sel(band=2)
+            band3 = sub_sar.sel(band=3)
+            band3.values = (band1.values / band2.values)
+            # Update the values of band 3 to the HH/HV ratio
+            # Note: do not need to update the CRS or X/Y dimensions because they are the same as band 1 and 2
+            sub_sar.loc[dict(band=3)] = band3
+            # for checking only --> print(sub_sar.sel(band=3).values)
+            # Save the updated SAR image to disk
+            sub_sar.rio.to_raster(Path(pathout_sar_band3), overwrite=True)
 
             img_n += 1
 
