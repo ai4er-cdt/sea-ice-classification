@@ -79,10 +79,10 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     # Output config
     sar_subfolder = "sar"
     chart_subfolder = "chart"
-    binary_subfolder = "binary_chart"
+    # binary_subfolder = "binary_chart"
     sar_prefix = "SAR"
     chart_prefix = "CHART"
-    binary_prefix = "BINARY_CHART"
+    # binary_prefix = "BINARY_CHART"
     output_ext = "tiff"
 
     # Makes sure some parameters have default values according to input
@@ -106,7 +106,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     # Create output dirs if they don't exist
     Path.mkdir(Path(f"{output_folder}/{sar_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
-    Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
+    # Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
@@ -138,9 +138,9 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 continue
 
             # Make a copy of the chart and set to binary classification objective
-            sub_binary = sub_chart.copy()
-            sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
-            sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
+            # sub_binary = sub_chart.copy()
+            # sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
+            # sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
 
             # Majority of filename is common to both sar and chart tiles
             file_n = "{:0>5}".format(img_n + 1)
@@ -149,7 +149,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             # Separate by subfolder and prefix
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
-            pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
+            # pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
             # Save tile info in a dictionary
             unique, counts = np.unique(sub_chart, return_counts=True)
@@ -166,7 +166,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
-            sub_binary.rio.to_raster(Path(pathout_binary))
+            # sub_binary.rio.to_raster(Path(pathout_binary))
 
             img_n += 1
 
@@ -250,8 +250,8 @@ if __name__ == "__main__":
     # User config
     n_pairs_to_process = args.n_pairs
     output_folder = "../Tiled_images"
-    resolution = 256
-    stride = 128
+    resolution = 256*4
+    stride = 128*4
     flip_charts = True  # ice charts may need vertical flip before tiling
 
     # Standard config 
