@@ -1,2 +1,11 @@
 # data path config is particular to each local environment
 data_path.config
+# ignore wandb logs
+wandb/
+sea-ice-classification/
+# ignore pycharm folders
+.idea/
+__pycache__/
+.idea/
+# ignore model checkpoint files
+*.ckpt
