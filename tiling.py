@@ -199,6 +199,35 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     
     return df
 
+def compute_metrics(array: DataArray) -> dict:
+    
+    """
+    Computes the mean and the standard deviation of each band of a SAR image.
+    In addition, computes mean and std of the ratio between HH and HV.
+
+        Parameters:
+            array (xarray.core.dataarray.DataArray): Original SAR image
+            
+        Returns:
+            info (dict): Array metrics for future use
+    """
+    
+    hh_hv = array[0] / (array[1] + 0.0001)
+    hh_mean = np.nanmean(array[0].values)
+    hv_mean = np.nanmean(array[1].values)
+    angle_mean = np.nanmean(array[2].values)
+    hh_hv_mean = np.nanmean(hh_hv.values)
+    hh_std = np.nanstd(array[0].values)
+    hv_std = np.nanstd(array[1].values)
+    angle_std = np.nanstd(array[2].values)
+    hh_hv_std = np.nanstd(hh_hv.values)
+    
+    info = {'hh_mean': hh_mean, 'hh_std': hh_std,
+            'hv_mean': hv_mean, 'hv_std': hv_std,
+            'angle_mean': angle_mean, 'angle_std': angle_std,
+            'hh_hv_mean': hh_hv_mean, 'hh_hv_std': hh_hv_std}
+    
+    return info
 
 def construct_train_val_test():
     """
