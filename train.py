@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 import wandb
+from constants import new_classes
 from argparse import ArgumentParser
 from torch import nn
 from torch.utils.data import DataLoader
@@ -25,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument("--precision", default=32, type=int, help="Precision for training. Options are 32 or 16")
     parser.add_argument("--log_every_n_steps", default=10, type=int, help="How often to log during training")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
+    parser.add_argument("--classification_type", default=None, type=str, help="Binary, ternary or multiclass classification")
 
     args = parser.parse_args()
 
@@ -32,7 +34,7 @@ if __name__ == '__main__':
 
     base_folder = "../Tiled_images"
     sar_folder = f"{base_folder}/sar"
-    chart_folder = f"{base_folder}/binary_chart"
+    chart_folder = f"{base_folder}/chart"
 
     if args.overfit:
         # load single train/val/test file and overfit
@@ -47,35 +49,38 @@ if __name__ == '__main__':
             test_files = f.read().splitlines()
 
     train_sar_files = [f"SAR_{f}" for f in train_files]
-    train_chart_files = [f"BINARY_CHART_{f}" for f in train_files]
+    train_chart_files = [f"CHART_{f}" for f in train_files]
     train_dataset = SeaIceDataset(sar_path=sar_folder,
                                   sar_files=train_sar_files,
                                   chart_path=chart_folder,
                                   chart_files=train_chart_files,
-                                  transform=None)
+                                  transform=None,
+                                  class_categories=new_classes[args.classification_type])
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
 
     val_sar_files = [f"SAR_{f}" for f in val_files]
-    val_chart_files = [f"BINARY_CHART_{f}" for f in val_files]
+    val_chart_files = [f"CHART_{f}" for f in val_files]
     val_dataset = SeaIceDataset(sar_path=sar_folder,
                                 sar_files=val_sar_files,
                                 chart_path=chart_folder,
                                 chart_files=val_chart_files,
-                                transform=None)
+                                transform=None,
+                                class_categories=new_classes[args.classification_type])
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
 
     test_sar_files = [f"SAR_{f}" for f in test_files]
-    test_chart_files = [f"BINARY_CHART_{f}" for f in test_files]
+    test_chart_files = [f"CHART_{f}" for f in test_files]
     test_dataset = SeaIceDataset(sar_path=sar_folder,
                                  sar_files=test_sar_files,
                                  chart_path=chart_folder,
                                  chart_files=test_chart_files,
-                                 transform=None)
+                                 transform=None,
+                                 class_categories=new_classes[args.classification_type])
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=4)
 
     # configure model
     if args.model == "unet":
-        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=2)
+        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=len(new_classes[args.classification_type])-1) # How to define n_classes when classifying on the original categories (-1 due to None)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
