@@ -20,7 +20,9 @@ chart_sar_pairs = [('20181203', 'S1B_EW_GRDM_1SDH_20181202T081815_20181202T08191
                    ('20211223', 'S1B_EW_GRDM_1SDH_20211222T231452_20211222T231543_030144_039978_72FF', 'WS')]
 
 new_classes = {'binary': {0: [247, 0, 1], 
-                          1: [13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92]}, # Possibly use list(range(13,93))?
+                          1: [13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92], # Perhaps use list(range(13,93))?
+                          None: None}, # None is added as a result of SeaIceDataset Class Definition in case we want to use all categories
                'ternary': {0: [247, 0, 1], 
                            1: [13, 14, 24, 46, 47, 68], 
-                           2: [78, 79, 81, 90, 91, 92]}}
+                           2: [78, 79, 81, 90, 91, 92], # This division was arbitrary, we might review this carefully later
+                           None: None}}
