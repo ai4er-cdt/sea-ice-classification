@@ -1,5 +1,6 @@
+import numpy as np
 import matplotlib.pyplot as plt
-import rioxarray
+import rioxarray as rxr
 from torch.utils.data import Dataset
 from torchvision import transforms
 from pytorch_lightning import Callback
@@ -16,7 +17,8 @@ class SeaIceDataset(Dataset):
                  sar_files: list[str],
                  chart_path: str,
                  chart_files: list[str],
-                 transform: transforms = None):
+                 transform: transforms = None,
+                 class_categories: dict = None):
         """
         Constructs a SeaIceDataset.
         :param sar_path: Base folder path of SAR images
@@ -30,6 +32,7 @@ class SeaIceDataset(Dataset):
         self.chart_path = chart_path
         self.chart_files = chart_files
         self.transform = transform
+        self.class_categories = class_categories
 
     def __len__(self):
         """
@@ -48,8 +51,12 @@ class SeaIceDataset(Dataset):
         """
         sar_name = f"{self.sar_path}/{self.sar_files[i]}"
         chart_name = f"{self.chart_path}/{self.chart_files[i]}"
-        sar = rioxarray.open_rasterio(sar_name, masked=True).values  # take all bands for shape of 256 x 256 x 3
-        chart = rioxarray.open_rasterio(chart_name, masked=True).values  # take binary array of shape 256 x 256
+        sar = rxr.open_rasterio(sar_name, masked=True).values  # take all bands for shape of 256 x 256 x 3
+        chart = rxr.open_rasterio(chart_name, masked=True).values  # take array of shape 256 x 256
+        if self.class_categories is not None:
+            for key, value in self.class_categories.items(): # recategorize according to parameter
+                chart[np.isin(chart, value)] = key
+        
         sample = {"sar": sar, "chart": chart}
         if self.transform:
             sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
