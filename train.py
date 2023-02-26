@@ -1,13 +1,15 @@
+
 import pytorch_lightning as pl
 import wandb
-from constants import new_classes
+import constants
 from argparse import ArgumentParser
 from torch import nn
 from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from util import SeaIceDataset, Visualise
 from model import Segmentation, UNet
-from torchmetrics import JaccardIndex  # may be called Jaccard Index in newer versions of torchmetrics
+from torchmetrics import JaccardIndex  
+from pathlib import Path
 
 
 if __name__ == '__main__':
@@ -27,60 +29,46 @@ if __name__ == '__main__':
     parser.add_argument("--log_every_n_steps", default=10, type=int, help="How often to log during training")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
     parser.add_argument("--classification_type", default=None, type=str, help="Binary, ternary or multiclass classification")
-
     args = parser.parse_args()
 
-    pl.seed_everything(args.seed)
-
+    # standard input dirs
     base_folder = "../Tiled_images"
     sar_folder = f"{base_folder}/sar"
     chart_folder = f"{base_folder}/chart"
 
-    if args.overfit:
-        # load single train/val/test file and overfit
-        train_files = val_files = test_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
+    # get file lists
+    if args.overfit:  # load single train/val file and overfit
+        train_files = val_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
         args.max_epochs = 1000
-    else:
-        with open(f"{base_folder}/train_files.txt", "r") as f:
+    else:  # load full sets of train/val files from pre-determined lists
+        with open(Path(f"{base_folder}/train_files.txt"), "r") as f:
             train_files = f.read().splitlines()
-        with open(f"{base_folder}/val_files.txt", "r") as f:
+        with open(Path(f"{base_folder}/val_files.txt"), "r") as f:
             val_files = f.read().splitlines()
-        with open(f"{base_folder}/test_files.txt", "r") as f:
-            test_files = f.read().splitlines()
 
+    # init
+    pl.seed_everything(args.seed)
+    new_classes=constants.new_classes[args.classification_type]
+
+    # load training data
     train_sar_files = [f"SAR_{f}" for f in train_files]
     train_chart_files = [f"CHART_{f}" for f in train_files]
-    train_dataset = SeaIceDataset(sar_path=sar_folder,
-                                  sar_files=train_sar_files,
-                                  chart_path=chart_folder,
-                                  chart_files=train_chart_files,
-                                  transform=None,
-                                  class_categories=new_classes[args.classification_type])
+    train_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=train_sar_files,
+                                  chart_path=chart_folder,chart_files=train_chart_files,
+                                  transform=None,class_categories=new_classes)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
 
+    # load validation data
     val_sar_files = [f"SAR_{f}" for f in val_files]
     val_chart_files = [f"CHART_{f}" for f in val_files]
-    val_dataset = SeaIceDataset(sar_path=sar_folder,
-                                sar_files=val_sar_files,
-                                chart_path=chart_folder,
-                                chart_files=val_chart_files,
-                                transform=None,
-                                class_categories=new_classes[args.classification_type])
+    val_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=val_sar_files,
+                                chart_path=chart_folder,chart_files=val_chart_files,
+                                transform=None,class_categories=new_classes)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
-
-    test_sar_files = [f"SAR_{f}" for f in test_files]
-    test_chart_files = [f"CHART_{f}" for f in test_files]
-    test_dataset = SeaIceDataset(sar_path=sar_folder,
-                                 sar_files=test_sar_files,
-                                 chart_path=chart_folder,
-                                 chart_files=test_chart_files,
-                                 transform=None,
-                                 class_categories=new_classes[args.classification_type])
-    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=4)
 
     # configure model
     if args.model == "unet":
-        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=len(new_classes[args.classification_type])-1) # How to define n_classes when classifying on the original categories (-1 due to None)
+        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=len(new_classes)-1) # How to define n_classes when classifying on the original categories (-1 due to None)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
