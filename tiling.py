@@ -1,7 +1,9 @@
+
 """
 AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
+
 import os
 import random
 import re
@@ -11,10 +13,10 @@ import xarray as xr
 import rioxarray as rxr
 from random import shuffle
 from xarray.core.dataarray import DataArray
-from pathlib import Path
 from datetime import datetime
 from timeit import default_timer
 from argparse import ArgumentParser
+from pathlib import Path
 
 
 def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
@@ -80,10 +82,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     sar_subfolder = "sar"
     sar_band3_subfolder = "sar_band3"
     chart_subfolder = "chart"
-    # binary_subfolder = "binary_chart"
     sar_prefix = "SAR"
     chart_prefix = "CHART"
-    # binary_prefix = "BINARY_CHART"
     output_ext = "tiff"
 
     # Makes sure some parameters have default values according to input
@@ -108,7 +108,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     Path.mkdir(Path(f"{output_folder}/{sar_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{sar_band3_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
-    # Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
@@ -139,11 +138,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 discarded_tiles += 1
                 continue
 
-            # Make a copy of the chart and set to binary classification objective
-            # sub_binary = sub_chart.copy()
-            # sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
-            # sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
-
             # Majority of filename is common to both sar and chart tiles
             file_n = "{:0>5}".format(img_n + 1)
             common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
@@ -152,7 +146,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
             pathout_sar_band3 = f"{output_folder}/{sar_band3_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
-            # pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
             # Save tile info in a dictionary
             unique, counts = np.unique(sub_chart, return_counts=True)
@@ -163,13 +156,11 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             info['size'] = size_x
             info['col'] = col
             info['row'] = row
-            
             info_lst.append(info)
 
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
-            # sub_binary.rio.to_raster(Path(pathout_binary))
 
             ### Update band 3 in sar images and save to new folder ###
             # Calculate the ratio of the HH/HV bands
@@ -247,7 +238,7 @@ def compute_metrics(array: DataArray) -> dict:
 
 def construct_train_val_test():
     """
-    Construct train/val/test set splits with filenames into CSVs based on tile_info CSVs
+    Construct train/val/test set splits with filenames into .txt based on tile_info CSVs
     """
     tile_directory = "../Tiled_images"
     tile_info_csvs = [f for f in os.listdir(tile_directory) if ".csv" in f]
