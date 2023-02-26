@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
@@ -7,16 +8,13 @@ import torchvision.transforms as transforms
 
 
 class Segmentation(pl.LightningModule):
+    
     """
     A LightningModule designed to perform image segmentation.
     """
 
-    def __init__(self,
-                 model: nn.Module,
-                 criterion: callable,
-                 learning_rate: float,
-                 metric: callable,
-                 ):
+    def __init__(self,model: nn.Module,criterion: callable,
+                 learning_rate: float,metric: callable):
         """
         Construct a Segmentation LightningModule.
         Note that we keep hyperparameters separate from dataloaders to prevent data leakage at test time.
@@ -41,12 +39,14 @@ class Segmentation(pl.LightningModule):
         return self.model(x)
 
     def training_step(self, batch: dict, batch_idx: int):
+        
         """
         Perform a pass through a batch of training data.
         :param batch: Batch of image pairs
         :param batch_idx: Index of batch
         :return: Loss from this batch of data for use in backprop
         """
+        
         # Load metrics and calculate mean across all images for each channel
         metrics_df = pd.read_csv('metrics.csv', delimiter=',')
         hh_mean = metrics_df['hh_mean'].mean()
@@ -73,6 +73,7 @@ class Segmentation(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        
         # Load metrics and calculate mean across all images for each channel
         metrics_df = pd.read_csv('metrics.csv', delimiter=',')
         hh_mean = metrics_df['hh_mean'].mean()
@@ -102,6 +103,7 @@ class Segmentation(pl.LightningModule):
         return loss
 
     def testing_step(self, batch, batch_idx):
+        
         # Load metrics and calculate mean across all images for each channel
         metrics_df = pd.read_csv('metrics.csv', delimiter=',')
         hh_mean = metrics_df['hh_mean'].mean()
@@ -137,10 +139,13 @@ class Segmentation(pl.LightningModule):
 
 
 class UNet(nn.Module):
+    
     """
     CNN with skip connections (U-Net) for image segmentation (pixel-wise classification).
     """
+    
     def __init__(self, kernel: int, n_channels: int, n_filters: int, n_classes: int):
+        
         """
         Construct a UNet.
         See following graphical diagram.
@@ -152,6 +157,7 @@ class UNet(nn.Module):
         :param n_filters: Number of convolutional filters to apply in each convolutional layer
         :param n_classes: Number of possible classes for output pixels
         """
+        
         super().__init__()
         stride = 2  # how far to slide the convolutional filter on each step
         padding = kernel // 2  # how much to pad the image on edges of input

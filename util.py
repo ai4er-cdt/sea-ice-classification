@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 import rioxarray as rxr
@@ -7,18 +8,15 @@ from pytorch_lightning import Callback
 
 
 class SeaIceDataset(Dataset):
+    
     """
     An implementation of a PyTorch dataset for loading sea ice SAR/chart image pairs.
     Inspired by https://pytorch.org/tutorials/beginner/data_loading_tutorial.html.
     """
 
-    def __init__(self,
-                 sar_path: str,
-                 sar_files: list[str],
-                 chart_path: str,
-                 chart_files: list[str],
-                 transform: transforms = None,
-                 class_categories: dict = None):
+    def __init__(self,sar_path: str,sar_files: list[str],
+                 chart_path: str,chart_files: list[str],
+                 transform: transforms = None,class_categories: dict = None):
         """
         Constructs a SeaIceDataset.
         :param sar_path: Base folder path of SAR images
@@ -51,12 +49,13 @@ class SeaIceDataset(Dataset):
         """
         sar_name = f"{self.sar_path}/{self.sar_files[i]}"
         chart_name = f"{self.chart_path}/{self.chart_files[i]}"
-        sar = rxr.open_rasterio(sar_name, masked=True).values  # take all bands for shape of 256 x 256 x 3
-        chart = rxr.open_rasterio(chart_name, masked=True).values  # take array of shape 256 x 256
+        sar = rxr.open_rasterio(sar_name, masked=True).values  # take all bands for shape of l x w x 3
+        chart = rxr.open_rasterio(chart_name, masked=True).values  # take array of shape l x w
+        # recategorize classes 
         if self.class_categories is not None:
-            for key, value in self.class_categories.items(): # recategorize according to parameter
+            for key, value in self.class_categories.items(): 
                 chart[np.isin(chart, value)] = key
-        
+        # apply transforms
         sample = {"sar": sar, "chart": chart}
         if self.transform:
             sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
@@ -77,9 +76,11 @@ class SeaIceDataset(Dataset):
 
 
 class Visualise(Callback):
+    
     """
     Callback to visualise input/output samples and predictions.
     """
+
     def __init__(self, val_dataloader, n_to_show=5):
         """
         Construct callback object.
