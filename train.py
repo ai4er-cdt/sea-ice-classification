@@ -73,7 +73,7 @@ if __name__ == '__main__':
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
-    metric = JaccardIndex(task="multiclass", num_classes=2)
+    metric = JaccardIndex(task="multiclass", num_classes=n_classes)
     segmenter = Segmentation(model, criterion, args.learning_rate, metric)
 
     # set up wandb logging
