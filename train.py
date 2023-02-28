@@ -10,7 +10,7 @@ from util import SeaIceDataset, Visualise
 from model import Segmentation, UNet
 from torchmetrics import JaccardIndex  
 from pathlib import Path
-
+import segmentation_models_pytorch as smp
 
 if __name__ == '__main__':
 
@@ -66,9 +66,10 @@ if __name__ == '__main__':
                                 transform=None,class_categories=new_classes)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
 
+    n_classes = len(new_classes)
     # configure model
     if args.model == "unet":
-        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=len(new_classes)-1) # How to define n_classes when classifying on the original categories (-1 due to None)
+        model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
