@@ -17,4 +17,5 @@ dependencies:
   - torchmetrics
   - pathlib
   - xarray
+  - segmentation-models-pytorch
 prefix: /home/users/arm99/miniconda3/envs/sea-ice-classification
