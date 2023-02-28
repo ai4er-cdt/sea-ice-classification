@@ -286,8 +286,8 @@ if __name__ == "__main__":
     # User config
     n_pairs_to_process = args.n_pairs
     output_folder = "../Tiled_images"
-    resolution = 256*4
-    stride = 128*4
+    resolution = 256
+    stride = 128
     flip_charts = True  # ice charts may need vertical flip before tiling
 
     # Standard config 
