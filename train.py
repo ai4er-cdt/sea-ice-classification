@@ -1,7 +1,7 @@
 
 import pytorch_lightning as pl
 import wandb
-import constants
+from constants import new_classes
 from argparse import ArgumentParser
 from torch import nn
 from torch.utils.data import DataLoader
@@ -48,14 +48,14 @@ if __name__ == '__main__':
 
     # init
     pl.seed_everything(args.seed)
-    new_classes=constants.new_classes[args.classification_type]
+    class_categories = new_classes[args.classification_type]
 
     # load training data
     train_sar_files = [f"SAR_{f}" for f in train_files]
     train_chart_files = [f"CHART_{f}" for f in train_files]
     train_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=train_sar_files,
                                   chart_path=chart_folder,chart_files=train_chart_files,
-                                  transform=None,class_categories=new_classes)
+                                  transform=None,class_categories=class_categories)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
 
     # load validation data
@@ -63,10 +63,10 @@ if __name__ == '__main__':
     val_chart_files = [f"CHART_{f}" for f in val_files]
     val_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=val_sar_files,
                                 chart_path=chart_folder,chart_files=val_chart_files,
-                                transform=None,class_categories=new_classes)
+                                transform=None,class_categories=class_categories)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
 
-    n_classes = len(new_classes)
+    n_classes = len(class_categories)
     # configure model
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
