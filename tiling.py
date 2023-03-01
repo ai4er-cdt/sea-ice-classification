@@ -294,6 +294,8 @@ if __name__ == "__main__":
     base_folder = open("data_path.config").read().strip()
     chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
     sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
+    #chart_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/rasterised_shapefiles")
+    #sar_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/dual_band_images")
     chart_ext = "tiff"
     sar_ext = "tif"
     
