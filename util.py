@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import rioxarray as rxr
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 from pytorch_lightning import Callback
