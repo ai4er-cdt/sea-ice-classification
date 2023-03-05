@@ -22,6 +22,10 @@ chart_sar_pairs = [('20181203', 'S1B_EW_GRDM_1SDH_20181202T081815_20181202T08191
                    # ('20201105', 'S1B_EW_GRDM_1SDH_20211104T231454_20211104T231545_029444_038388_741F', 'WS'), # Weird cropping
                    ('20211223', 'S1B_EW_GRDM_1SDH_20211222T231452_20211222T231543_030144_039978_72FF', 'WS')]
 
+test_chart_sar_pairs = [('20221216', 'S1A_EW_GRDM_1SDH_20221216T232348_20221216T232453_046363_058DAD_0BBF', 'WS'),
+                        ('20221222', 'S1A_EW_GRDM_1SDH_20221222T010923_20221222T011027_046437_059035_3C1', 'WS'),
+                        ('20230112', 'S1A_EW_GRDM_1SDH_20230112T203241_20230112T203345_046755_059AF6_1E95', 'WS')]
+
 # bespoke sea ice concentration categories / classes
 # these classes will supercede the original ice chart categories if specified
 new_classes = {None: None,  # use original categories
