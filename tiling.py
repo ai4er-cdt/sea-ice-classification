@@ -206,6 +206,7 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     
     return df
 
+
 def compute_metrics(array: DataArray) -> dict:
     
     """
@@ -235,6 +236,7 @@ def compute_metrics(array: DataArray) -> dict:
             'hh_hv_mean': hh_hv_mean, 'hh_hv_std': hh_hv_std}
     
     return info
+
 
 def construct_train_val_test():
     """
@@ -285,15 +287,15 @@ if __name__ == "__main__":
 
     # User config
     n_pairs_to_process = args.n_pairs
-    output_folder = "../Tiled_images"
+    output_folder = open("tile.config").read().strip()
     resolution = 256
     stride = 128
     flip_charts = True  # ice charts may need vertical flip before tiling
 
     # Standard config 
-    base_folder = open("data_path.config").read().strip()
-    chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
-    sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
+    ftp_folder = open("ftp.config").read().strip()
+    chart_folder = Path(f"{ftp_folder}/rasterised_shapefiles")
+    sar_folder = Path(f"{ftp_folder}//dual_band_images")
     #chart_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/rasterised_shapefiles")
     #sar_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/dual_band_images")
     chart_ext = "tiff"
