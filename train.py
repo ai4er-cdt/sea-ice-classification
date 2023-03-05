@@ -32,7 +32,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # standard input dirs
-    base_folder = "../Tiled_images"
+    base_folder = open("data_path.config").read().strip()
     sar_folder = f"{base_folder}/sar"
     chart_folder = f"{base_folder}/chart"
 
