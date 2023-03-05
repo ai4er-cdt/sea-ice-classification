@@ -1,5 +1,7 @@
 # ignore local data path config
 data_path.config
+ftp.config
+tile.config
 # ignore wandb logs
 wandb/
 sea-ice-classification/
