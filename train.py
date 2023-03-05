@@ -27,8 +27,7 @@ if __name__ == '__main__':
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
-    parser.add_argument("--n_filters", default=16, type=int,
-                        help="Number of convolutional filters in hidden layer if model==unet")
+    parser.add_argument("--n_filters", default=16, type=int, help="Number of convolutional filters in hidden layer if model==unet")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--batch_size", default=256, type=int, help="Batch size")
     parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
