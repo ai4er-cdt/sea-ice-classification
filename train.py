@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # parse command line arguments
     parser = ArgumentParser(description="Sea Ice Segmentation")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
-    parser.add_argument("--model", default="unet", type=str, help="Name of model to train")
+    parser.add_argument("--model", default="unet", type=str, choices=["unet", "densenet"], help="Name of model to train", required = True)
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
@@ -72,6 +72,8 @@ if __name__ == '__main__':
     # configure model
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
+    elif args.model == "densenet":
+        model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
