@@ -20,7 +20,9 @@ if __name__ == '__main__':
                         help="Name of model to train", required=True)
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
-    parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
+    parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
+    parser.add_argument("--n_filters", default=16, type=int,
+                        help="Number of convolutional filters in hidden layer if model==unet")
     parser.add_argument("--learning_rate", default=1e-3, type=float, help="Learning rate")
     parser.add_argument("--batch_size", default=256, type=int, help="Batch size")
     parser.add_argument("--max_epochs", default=100, type=int, help="Number of epochs to fine-tune")
@@ -60,7 +62,7 @@ if __name__ == '__main__':
                                   chart_path=chart_folder, chart_files=train_chart_files,
                                   transform=None, class_categories=class_categories)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size,
-                                  num_workers=1)  # num_workers changed to 1, if GPU
+                                  num_workers=args.n_workers)
 
     # load validation data
     val_sar_files = [f"SAR_{f}" for f in val_files]
@@ -69,7 +71,7 @@ if __name__ == '__main__':
                                 chart_path=chart_folder, chart_files=val_chart_files,
                                 transform=None, class_categories=class_categories)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size,
-                                num_workers=1)  # num_workers changed to 1, if GPU
+                                num_workers=args.n_workers)
 
     # configure model
     if args.model == "unet":
