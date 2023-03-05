@@ -56,7 +56,7 @@ if __name__ == '__main__':
     train_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=train_sar_files,
                                   chart_path=chart_folder,chart_files=train_chart_files,
                                   transform=None,class_categories=class_categories)
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=1) #num_workers changed to 1, if GPU
 
     # load validation data
     val_sar_files = [f"SAR_{f}" for f in val_files]
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     val_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=val_sar_files,
                                 chart_path=chart_folder,chart_files=val_chart_files,
                                 transform=None,class_categories=class_categories)
-    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=1) #num_workers changed to 1, if GPU
 
     n_classes = len(class_categories)
     # configure model
