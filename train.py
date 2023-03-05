@@ -35,7 +35,6 @@ if __name__ == '__main__':
     parser.add_argument("--log_every_n_steps", default=10, type=int, help="How often to log during training")
     parser.add_argument("--encoder_depth", default=5, type=int,
                         help="Number of decoder stages for smp models (increases number of features)")
-    parser.add_argument("--n_workers", default=1, type=int, help="Number of subprocesses for data loading")
     parser.add_argument("--max_epochs", default=100, type=int, help="Number of epochs to fine-tune")
     args = parser.parse_args()
 
@@ -47,7 +46,8 @@ if __name__ == '__main__':
     # get file lists
     if args.overfit:  # load single train/val file and overfit
         print("overfitting...")
-        train_files = val_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
+        train_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size * 100
+        val_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
             train_files = f.read().splitlines()
