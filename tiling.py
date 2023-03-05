@@ -240,18 +240,18 @@ def compute_metrics(array: DataArray) -> dict:
 
 def construct_train_val_test():
     """
-    Construct train/val/test set splits with filenames into .txt based on tile_info CSVs
+    Construct train/val set splits with filenames into .txt based on tile_info CSVs
     """
     tile_directory = "../Tiled_images"
     tile_info_csvs = [f for f in os.listdir(tile_directory) if ".csv" in f]
-    train, test = [], []
+    train, val = [], []
     for filename in tile_info_csvs:
         table = pd.read_csv(f"../Tiled_images/{filename}")
         for i, row in table.iterrows():
-            if row["region"] == "AP":
+            if row["basename"] in ["20171106", "20190313", "20200117"]:  # select 3 specific WS images for validation
+                val.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
+            else:  # use all other images in training
                 train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-            else:
-                test.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
     random.seed(0)
     shuffle(train)  # ensure our train/val split is reproducibly random
     n_train = int(0.8 * len(train))
@@ -260,8 +260,6 @@ def construct_train_val_test():
         f.write("\n".join(train))
     with open(f"{tile_directory}/val_files.txt", "w") as f:
         f.write("\n".join(val))
-    with open(f"{tile_directory}/test_files.txt", "w") as f:
-        f.write("\n".join(test))
 
 
 if __name__ == "__main__":
