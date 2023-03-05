@@ -5,7 +5,7 @@ import rioxarray as rxr
 from torch.utils.data import Dataset
 from torchvision import transforms
 from pytorch_lightning import Callback
-
+import pandas as pd
 
 class SeaIceDataset(Dataset):
     
@@ -16,7 +16,7 @@ class SeaIceDataset(Dataset):
 
     def __init__(self,sar_path: str,sar_files: list[str],
                  chart_path: str,chart_files: list[str],
-                 transform: transforms = None,class_categories: dict = None):
+                 transform: transforms.Compose = transforms.Compose([]),class_categories: dict = None):
         """
         Constructs a SeaIceDataset.
         :param sar_path: Base folder path of SAR images
@@ -51,14 +51,36 @@ class SeaIceDataset(Dataset):
         chart_name = f"{self.chart_path}/{self.chart_files[i]}"
         sar = rxr.open_rasterio(sar_name, masked=True).values  # take all bands for shape of l x w x 3
         chart = rxr.open_rasterio(chart_name, masked=True).values  # take array of shape l x w
+        
         # recategorize classes 
         if self.class_categories is not None:
             for key, value in self.class_categories.items(): 
                 chart[np.isin(chart, value)] = key
+
         # apply transforms
         sample = {"sar": sar, "chart": chart}
-        if self.transform:
+        if self.transform is not None:
+
+            # Convert the data to tensors
+            sar = torch.from_numpy(sar)
+            chart = torch.from_numpy(chart)
+
+            # Calculate mean and std deviation for HH, HV and incidence angle
+            metrics_df = pd.read_csv('metrics.csv', delimiter=',')
+            hh_mean = metrics_df['hh_mean'].mean()
+            hh_std = metrics_df['hh_std'].mean()
+            hv_mean = metrics_df['hv_mean'].mean()
+            hv_std = metrics_df['hv_std'].mean()
+            angle_mean = metrics_df['angle_mean'].mean()
+            angle_std = metrics_df['angle_std'].mean()
+            ratio_mean = metrics_df['hh_hv_mean'].mean()
+            ratio_std = metrics_df['hh_hv_std'].mean()
+
+            # normalise the sar data with mean and std deviation for each channel
+            sar_transform = transforms.Compose([transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean], std=[hh_std, hv_std, angle_std])])
+            sar = sar_transform(sar)
             sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
+
         return sample
 
     def visualise(self, i):
@@ -73,7 +95,7 @@ class SeaIceDataset(Dataset):
         ax[1].imshow(sample["chart"])
         plt.tight_layout()
         plt.show()
-
+        
 
 class Visualise(Callback):
     

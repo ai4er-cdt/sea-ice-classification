@@ -3,9 +3,6 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-import pandas as pd
-import torchvision.transforms as transforms
-
 
 class Segmentation(pl.LightningModule):
     
@@ -47,26 +44,11 @@ class Segmentation(pl.LightningModule):
         :return: Loss from this batch of data for use in backprop
         """
         
-        # Load metrics and calculate mean across all images for each channel
-        metrics_df = pd.read_csv('metrics.csv', delimiter=',')
-        hh_mean = metrics_df['hh_mean'].mean()
-        hh_std = metrics_df['hh_std'].mean()
-        hv_mean = metrics_df['hv_mean'].mean()
-        hv_std = metrics_df['hv_std'].mean()
-        angle_mean = metrics_df['angle_mean'].mean()
-        angle_std = metrics_df['angle_std'].mean()
-        ratio_mean = metrics_df['hh_hv_mean'].mean()
-        ratio_std = metrics_df['hh_hv_std'].mean()
-        
         # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
-            normalisation = transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean],std=[hh_std, hv_std, angle_std])
-            x = normalisation(x)
         elif "sar_band3" in batch:
             x, y = batch["sar_band3"], batch["chart"].squeeze().long()
-            normalisation_band3 = transforms.Normalize(mean=[hh_mean, hv_mean, ratio_mean],std=[hh_std, hv_std, ratio_std])
-            x = normalisation_band3(x)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         self.log("train_loss", loss)
@@ -74,26 +56,11 @@ class Segmentation(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         
-        # Load metrics and calculate mean across all images for each channel
-        metrics_df = pd.read_csv('metrics.csv', delimiter=',')
-        hh_mean = metrics_df['hh_mean'].mean()
-        hh_std = metrics_df['hh_std'].mean()
-        hv_mean = metrics_df['hv_mean'].mean()
-        hv_std = metrics_df['hv_std'].mean()
-        angle_mean = metrics_df['angle_mean'].mean()
-        angle_std = metrics_df['angle_std'].mean()
-        ratio_mean = metrics_df['hh_hv_mean'].mean()
-        ratio_std = metrics_df['hh_hv_std'].mean()
-        
         # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
-            normalisation = transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean],std=[hh_std, hv_std, angle_std])
-            x = normalisation(x)
         elif "sar_band3" in batch:
             x, y = batch["sar_band3"], batch["chart"].squeeze().long()
-            normalisation_band3 = transforms.Normalize(mean=[hh_mean, hv_mean, ratio_mean],std=[hh_std, hv_std, ratio_std])
-            x = normalisation_band3(x)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
@@ -104,26 +71,11 @@ class Segmentation(pl.LightningModule):
 
     def testing_step(self, batch, batch_idx):
         
-        # Load metrics and calculate mean across all images for each channel
-        metrics_df = pd.read_csv('metrics.csv', delimiter=',')
-        hh_mean = metrics_df['hh_mean'].mean()
-        hh_std = metrics_df['hh_std'].mean()
-        hv_mean = metrics_df['hv_mean'].mean()
-        hv_std = metrics_df['hv_std'].mean()
-        angle_mean = metrics_df['angle_mean'].mean()
-        angle_std = metrics_df['angle_std'].mean()
-        ratio_mean = metrics_df['hh_hv_mean'].mean()
-        ratio_std = metrics_df['hh_hv_std'].mean()
-        
         # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
-            normalisation = transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean],std=[hh_std, hv_std, angle_std])
-            x = normalisation(x)
         elif "sar_band3" in batch:
             x, y = batch["sar_band3"], batch["chart"].squeeze().long()
-            normalisation_band3 = transforms.Normalize(mean=[hh_mean, hv_mean, ratio_mean],std=[hh_std, hv_std, ratio_std])
-            x = normalisation_band3(x)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
