@@ -74,6 +74,8 @@ if __name__ == '__main__':
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     elif args.model == "densenet":
         model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
+    elif args.model == "vgg19":
+        model = smp.Unet('vgg19', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
