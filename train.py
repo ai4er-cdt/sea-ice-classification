@@ -16,7 +16,8 @@ if __name__ == '__main__':
     # parse command line arguments
     parser = ArgumentParser(description="Sea Ice Segmentation")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
-    parser.add_argument("--model", default="unet", type=str, choices=["unet", "densenet"], help="Name of model to train", required = True)
+    parser.add_argument("--model", default="unet", type=str, choices=["unet", "densenet"],
+                        help="Name of model to train", required=True)
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_filters", default=16, type=float, help="Number of convolutional filters in hidden layer")
@@ -27,7 +28,8 @@ if __name__ == '__main__':
     parser.add_argument("--precision", default=32, type=int, help="Precision for training. Options are 32 or 16")
     parser.add_argument("--log_every_n_steps", default=10, type=int, help="How often to log during training")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
-    parser.add_argument("--classification_type", default=None, type=str,
+    parser.add_argument("--classification_type", default="binary", type=str,
+                        choices=["binary", "ternary", "multiclass"],
                         help="Binary, ternary or multiclass classification")
     args = parser.parse_args()
 
@@ -73,7 +75,8 @@ if __name__ == '__main__':
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     elif args.model == "densenet":
-        model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
+        model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16],
+                         in_channels=3, classes=n_classes)
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()
