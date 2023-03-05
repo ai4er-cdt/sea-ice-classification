@@ -36,14 +36,14 @@ class SeaIceDataset(Dataset):
 
         # read in precomputed mean and std deviation for HH, HV, incidence angle, and ratio
         metrics_df = pd.read_csv("metrics.csv", delimiter=",")
-        self.hh_mean = metrics_df["hh_mean"].mean()
-        self.hh_std = metrics_df["hh_std"].mean()
-        self.hv_mean = metrics_df["hv_mean"].mean()
-        self.hv_std = metrics_df["hv_std"].mean()
-        self.angle_mean = metrics_df["angle_mean"].mean()
-        self.angle_std = metrics_df["angle_std"].mean()
-        self.ratio_mean = metrics_df["hh_hv_mean"].mean()
-        self.ratio_std = metrics_df["hh_hv_std"].mean()
+        self.hh_mean = metrics_df["hh_mean"]
+        self.hh_std = metrics_df["hh_std"]
+        self.hv_mean = metrics_df["hv_mean"]
+        self.hv_std = metrics_df["hv_std"]
+        self.angle_mean = metrics_df["angle_mean"]
+        self.angle_std = metrics_df["angle_std"]
+        self.ratio_mean = metrics_df["hh_hv_mean"]
+        self.ratio_std = metrics_df["hh_hv_std"]
 
     def __len__(self):
         """
