@@ -21,4 +21,3 @@ dependencies:
   - xarray
   - segmentation-models-pytorch
   - cartopy
-prefix: /home/users/arm99/miniconda3/envs/sea-ice-classification
