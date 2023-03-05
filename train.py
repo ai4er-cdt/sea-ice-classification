@@ -15,7 +15,7 @@ import segmentation_models_pytorch as smp
 if __name__ == '__main__':
 
     # parse command line arguments
-    parser = ArgumentParser(description="Sea Ice Segmentation")
+    parser = ArgumentParser(description="Sea Ice Segmentation Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str, help="Name of model to train")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument("--precision", default=32, type=int, help="Precision for training. Options are 32 or 16")
     parser.add_argument("--log_every_n_steps", default=10, type=int, help="How often to log during training")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
-    parser.add_argument("--classification_type", default=None, type=str, help="Binary, ternary or multiclass classification")
+    parser.add_argument("--classification_type", default=None, type=str, help="[binary,ternary,multiclass]")
     args = parser.parse_args()
 
     # standard input dirs
@@ -49,13 +49,14 @@ if __name__ == '__main__':
     # init
     pl.seed_everything(args.seed)
     class_categories = new_classes[args.classification_type]
+    n_classes = len(class_categories)
 
     # load training data
     train_sar_files = [f"SAR_{f}" for f in train_files]
     train_chart_files = [f"CHART_{f}" for f in train_files]
     train_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=train_sar_files,
                                   chart_path=chart_folder,chart_files=train_chart_files,
-                                  transform=None,class_categories=class_categories)
+                                  class_categories=class_categories)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4)
 
     # load validation data
@@ -63,10 +64,9 @@ if __name__ == '__main__':
     val_chart_files = [f"CHART_{f}" for f in val_files]
     val_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=val_sar_files,
                                 chart_path=chart_folder,chart_files=val_chart_files,
-                                transform=None,class_categories=class_categories)
+                                class_categories=class_categories)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4)
 
-    n_classes = len(class_categories)
     # configure model
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)

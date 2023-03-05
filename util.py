@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from pytorch_lightning import Callback
 import pandas as pd
+import torch
 
 class SeaIceDataset(Dataset):
     
@@ -16,20 +17,18 @@ class SeaIceDataset(Dataset):
 
     def __init__(self,sar_path: str,sar_files: list[str],
                  chart_path: str,chart_files: list[str],
-                 transform: transforms.Compose = transforms.Compose([]),class_categories: dict = None):
+                 class_categories: dict = None):
         """
         Constructs a SeaIceDataset.
         :param sar_path: Base folder path of SAR images
         :param sar_files: List of filenames of SAR images
         :param chart_path: Base folder path of charts
         :param chart_files: List of filenames of charts
-        :param transform: Callable transformation to apply to images upon loading
         """
         self.sar_path = sar_path
         self.sar_files = sar_files
         self.chart_path = chart_path
         self.chart_files = chart_files
-        self.transform = transform
         self.class_categories = class_categories
 
     def __len__(self):
@@ -41,12 +40,15 @@ class SeaIceDataset(Dataset):
         return len(self.sar_files)
 
     def __getitem__(self, i: int):
+        
         """
         Implements the SeaIceDataset[i] magic method. Required to implement by Dataset superclass.
-        When training/testing, this method is used to actually fetch data.
+        When training/testing, this method is used to actually fetch data and apply transformations. 
         :param i: Index of which image pair to fetch
         :return: Dictionary with SAR and chart pair
         """
+
+        # load data from files
         sar_name = f"{self.sar_path}/{self.sar_files[i]}"
         chart_name = f"{self.chart_path}/{self.chart_files[i]}"
         sar = rxr.open_rasterio(sar_name, masked=True).values  # take all bands for shape of l x w x 3
@@ -56,30 +58,32 @@ class SeaIceDataset(Dataset):
         if self.class_categories is not None:
             for key, value in self.class_categories.items(): 
                 chart[np.isin(chart, value)] = key
+        
+        # Convert the data to tensors
+        sar = torch.from_numpy(sar)
+        chart = torch.from_numpy(chart)
 
-        # apply transforms
+        # calculate mean and std deviation for HH, HV and incidence angle
+        metrics_df = pd.read_csv('metrics.csv', delimiter=',')
+        hh_mean = metrics_df['hh_mean'].mean()
+        hh_std = metrics_df['hh_std'].mean()
+        hv_mean = metrics_df['hv_mean'].mean()
+        hv_std = metrics_df['hv_std'].mean()
+        angle_mean = metrics_df['angle_mean'].mean()
+        angle_std = metrics_df['angle_std'].mean()
+        ratio_mean = metrics_df['hh_hv_mean'].mean()
+        ratio_std = metrics_df['hh_hv_std'].mean()
+
+        # normalise the sar data with mean and std deviation for each channel
+        sar_transform = transforms.Compose([transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean], std=[hh_std, hv_std, angle_std])])
+        sar = sar_transform(sar)
+
+        # check normalisation
+        assert torch.amin(sar,(0,1,2)) >= -1, "normalised sar value < -1"
+        assert torch.amax(sar,(0,1,2)) <= 1, "normalised sar value > 1"
+
+        # combine into sample pair
         sample = {"sar": sar, "chart": chart}
-        if self.transform is not None:
-
-            # Convert the data to tensors
-            sar = torch.from_numpy(sar)
-            chart = torch.from_numpy(chart)
-
-            # Calculate mean and std deviation for HH, HV and incidence angle
-            metrics_df = pd.read_csv('metrics.csv', delimiter=',')
-            hh_mean = metrics_df['hh_mean'].mean()
-            hh_std = metrics_df['hh_std'].mean()
-            hv_mean = metrics_df['hv_mean'].mean()
-            hv_std = metrics_df['hv_std'].mean()
-            angle_mean = metrics_df['angle_mean'].mean()
-            angle_std = metrics_df['angle_std'].mean()
-            ratio_mean = metrics_df['hh_hv_mean'].mean()
-            ratio_std = metrics_df['hh_hv_std'].mean()
-
-            # normalise the sar data with mean and std deviation for each channel
-            sar_transform = transforms.Compose([transforms.Normalize(mean=[hh_mean, hv_mean, angle_mean], std=[hh_std, hv_std, angle_std])])
-            sar = sar_transform(sar)
-            sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
 
         return sample
 

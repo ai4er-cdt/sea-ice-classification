@@ -36,15 +36,12 @@ class Segmentation(pl.LightningModule):
         return self.model(x)
 
     def training_step(self, batch: dict, batch_idx: int):
-        
         """
         Perform a pass through a batch of training data.
         :param batch: Batch of image pairs
         :param batch_idx: Index of batch
         :return: Loss from this batch of data for use in backprop
         """
-        
-        # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
         elif "sar_band3" in batch:
@@ -55,8 +52,6 @@ class Segmentation(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        
-        # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
         elif "sar_band3" in batch:
@@ -70,8 +65,6 @@ class Segmentation(pl.LightningModule):
         return loss
 
     def testing_step(self, batch, batch_idx):
-        
-        # Load sar data and apply normalisation
         if "sar" in batch:
             x, y = batch["sar"], batch["chart"].squeeze().long()
         elif "sar_band3" in batch:
