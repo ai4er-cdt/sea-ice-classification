@@ -248,9 +248,9 @@ def construct_train_val_test():
     for filename in tile_info_csvs:
         table = pd.read_csv(f"../Tiled_images/{filename}")
         for i, row in table.iterrows():
-            if row["region"] == "AP":  # TODO: reconsider whether to train on WS
+            if row["region"] == "AP":
                 train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-            else:  # TODO: reconsider whether to test on AP
+            else:
                 test.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
     random.seed(0)
     shuffle(train)  # ensure our train/val split is reproducibly random
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     # Standard config 
     ftp_folder = open("ftp.config").read().strip()
     chart_folder = Path(f"{ftp_folder}/rasterised_shapefiles")
-    sar_folder = Path(f"{ftp_folder}//dual_band_images")
+    sar_folder = Path(f"{ftp_folder}/dual_band_images")
     #chart_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/rasterised_shapefiles")
     #sar_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/dual_band_images")
     chart_ext = "tiff"
