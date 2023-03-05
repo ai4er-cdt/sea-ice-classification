@@ -1,17 +1,12 @@
-
 """
 AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
-
-import os
-import random
 import re
 import numpy as np
 import pandas as pd
 import xarray as xr
 import rioxarray as rxr
-from random import shuffle
 from xarray.core.dataarray import DataArray
 from datetime import datetime
 from timeit import default_timer
@@ -203,7 +198,7 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     csv_file = f'{output_folder}/tile_info_{now}.csv'
     
     df.to_csv(csv_file, index=False)
-    
+
     return df
 
 
@@ -238,30 +233,6 @@ def compute_metrics(array: DataArray) -> dict:
     return info
 
 
-def construct_train_val_test():
-    """
-    Construct train/val set splits with filenames into .txt based on tile_info CSVs
-    """
-    tile_directory = "../Tiled_images"
-    tile_info_csvs = [f for f in os.listdir(tile_directory) if ".csv" in f]
-    train, val = [], []
-    for filename in tile_info_csvs:
-        table = pd.read_csv(f"../Tiled_images/{filename}")
-        for i, row in table.iterrows():
-            if row["basename"] in ["20171106", "20190313", "20200117"]:  # select 3 specific WS images for validation
-                val.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-            else:  # use all other images in training
-                train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-    random.seed(0)
-    shuffle(train)  # ensure our train/val split is reproducibly random
-    n_train = int(0.8 * len(train))
-    train, val = train[:n_train], train[n_train:]
-    with open(f"{tile_directory}/train_files.txt", "w") as f:
-        f.write("\n".join(train))
-    with open(f"{tile_directory}/val_files.txt", "w") as f:
-        f.write("\n".join(val))
-
-
 if __name__ == "__main__":
 
     """
@@ -280,24 +251,28 @@ if __name__ == "__main__":
     """
 
     parser = ArgumentParser(description="Sea Ice Tiling")
+    parser.add_argument("--mode", default="train/val", type=str, options=["train/val", "test"],
+                        help="Whether to tile train/val images or test images")
     parser.add_argument("--n_pairs", default=1, type=int, help="Number of pairs to process")
     args = parser.parse_args()
 
     # User config
     n_pairs_to_process = args.n_pairs
-    output_folder = open("tile.config").read().strip()
     resolution = 256
     stride = 128
     flip_charts = True  # ice charts may need vertical flip before tiling
-
-    # Standard config 
-    ftp_folder = open("ftp.config").read().strip()
-    chart_folder = Path(f"{ftp_folder}/rasterised_shapefiles")
-    sar_folder = Path(f"{ftp_folder}/dual_band_images")
-    #chart_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/rasterised_shapefiles")
-    #sar_folder = Path(f"/gws/nopw/j04/ai4er/guided-team-challenge/2023/FTP_data/dual_band_images")
     chart_ext = "tiff"
     sar_ext = "tif"
+    if args.mode == "test":
+        output_folder = Path(open("tile.config").read().strip()) / "test"
+        ftp_folder = Path(open("ftp.config").read().strip()) / "test_ims"
+        chart_folder = ftp_folder / "rasterised_ice_charts"
+        sar_folder = ftp_folder / "original_sar_images"
+    else:
+        output_folder = Path(open("tile.config").read().strip())
+        ftp_folder = Path(open("ftp.config").read().strip())
+        chart_folder = ftp_folder / "rasterised_shapefiles"
+        sar_folder = ftp_folder / "dual_band_images"
     
     # Prepare to run
     t_start = default_timer()
@@ -321,8 +296,7 @@ if __name__ == "__main__":
         total_info.extend(info_lst)
 
     create_tile_info_dataframe(total_info, output_folder)
-    construct_train_val_test()
-    
+
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
     print(f"Total discarded tile pairs: {total_discarded}")
