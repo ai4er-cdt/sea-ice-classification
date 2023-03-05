@@ -15,13 +15,13 @@ from pathlib import Path
 
 if __name__ == "__main__":
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(description="Sea Ice Segmentation Test")
     parser = pl.Trainer.add_argparse_args(parser)
     parser.add_argument("--username", default="andrewmcdonald", type=str, help="wandb username")
     parser.add_argument("--name", default="3i9dp51u", type=str, help="Name of wandb run")
     parser.add_argument("--batch_size", default=128, type=int, help="Batch size")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
-    parser.add_argument("--classification_type", default=None, type=str, help="Binary, ternary or multiclass classification")
+    parser.add_argument("--classification_type", default=None, type=str, help="[binary,ternary,multiclass]")
     args = parser.parse_args()
 
     # standard input dirs
@@ -36,14 +36,16 @@ if __name__ == "__main__":
         with open(Path(f"{base_folder}/test_files.txt"), "r") as f:
             test_files = f.read().splitlines()
     
+    # init
     class_categories = new_classes[args.classification_type]
-    
+    n_classes = len(class_categories)
+
     # load test data
     test_sar_files = [f"SAR_{f}" for f in test_files]
     test_chart_files = [f"CHART_{f}" for f in test_files]
     test_dataset = SeaIceDataset(sar_path=sar_folder,sar_files=test_sar_files,
                                  chart_path=chart_folder,chart_files=test_chart_files,
-                                 transform=None,class_categories=class_categories)
+                                 class_categories=class_categories)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=4)
 
     # wandb logging
@@ -62,8 +64,6 @@ if __name__ == "__main__":
         if epoch > best_epoch:
             best_epoch = epoch
             best_checkpoint = f"{checkpoint_folder}/{checkpoint}"
-    
-    n_classes = len(class_categories)
     model = Segmentation.load_from_checkpoint(best_checkpoint, model=UNet(kernel=3, n_channels=3, n_filters=run.config["n_filters"], n_classes=n_classes))
 
     # test

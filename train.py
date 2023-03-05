@@ -14,7 +14,7 @@ import segmentation_models_pytorch as smp
 if __name__ == '__main__':
 
     # parse command line arguments
-    parser = ArgumentParser(description="Sea Ice Segmentation")
+    parser = ArgumentParser(description="Sea Ice Segmentation Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str, choices=["unet", "densenet"],
                         help="Name of model to train", required=True)
@@ -51,6 +51,7 @@ if __name__ == '__main__':
     # init
     pl.seed_everything(args.seed)
     class_categories = new_classes[args.classification_type]
+    n_classes = len(class_categories)
 
     # load training data
     train_sar_files = [f"SAR_{f}" for f in train_files]
@@ -70,13 +71,14 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size,
                                 num_workers=1)  # num_workers changed to 1, if GPU
 
-    n_classes = len(class_categories)
     # configure model
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     elif args.model == "densenet":
-        model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16],
-                         in_channels=3, classes=n_classes)
+        model = smp.Unet('densenet201', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
+    elif args.model == "vgg19":
+        model = smp.Unet('vgg19', encoder_weights='imagenet', encoder_depth=1, decoder_channels=[16], in_channels=3, classes=n_classes)
+
     else:
         raise ValueError("Unsupported model type")
     criterion = nn.CrossEntropyLoss()

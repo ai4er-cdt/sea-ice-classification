@@ -10,3 +10,5 @@ __pycache__/
 .idea/
 # ignore model checkpoint files
 *.ckpt
+# ignore testing notebook
+handy.ipynb
