@@ -31,7 +31,7 @@ def construct_test(tile_info_csv):
     """
     Construct test set with filenames into .txt based on tile_info CSV
     """
-    tile_directory = Path(open("tile.config").read().strip())
+    tile_directory = Path(open("tile.config").read().strip()) / "test"
     test = []
     table = pd.read_csv(str(tile_directory / tile_info_csv))
     for i, row in table.iterrows():
