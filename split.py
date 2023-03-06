@@ -14,7 +14,7 @@ def construct_train_val(tile_info_csv):
     train, val = [], []
     table = pd.read_csv(str(tile_directory / tile_info_csv))
     for i, row in table.iterrows():
-        if row["basename"] in ["20171106", "20190313", "20200117"]:  # select 3 specific WS images for validation
+        if row["basename"] in (20171106, 20190313, 20200117):  # select 3 specific WS images for validation
             val.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
         else:  # use all other images in training
             train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
