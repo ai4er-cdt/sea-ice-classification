@@ -55,7 +55,7 @@ if __name__ == '__main__':
         df = pd.read_csv("interesting_images.csv")[:5]
         files = []
         for i, row in df.iterrows():
-            files.append(f"{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff")
+            files.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
         train_files = files * args.batch_size * 20
         val_files = files
     else:  # load full sets of train/val files from pre-determined lists
