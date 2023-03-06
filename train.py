@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     # get file lists
     if args.overfit:  # load single train/val file and overfit
-        train_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size * 100
-        val_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
+        train_files = ["AP_20181220_00550_[8320,1920]_256x256.tiff"] * args.batch_size * 100
+        val_files = ["AP_20181220_00550_[8320,1920]_256x256.tiff"] * args.batch_size
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
             train_files = f.read().splitlines()
