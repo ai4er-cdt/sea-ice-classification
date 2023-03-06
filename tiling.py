@@ -251,7 +251,7 @@ if __name__ == "__main__":
     """
 
     parser = ArgumentParser(description="Sea Ice Tiling")
-    parser.add_argument("--mode", default="train/val", type=str, options=["train/val", "test"],
+    parser.add_argument("--mode", default="train/val", type=str, choices=["train/val", "test"],
                         help="Whether to tile train/val images or test images")
     parser.add_argument("--n_pairs", default=1, type=int, help="Number of pairs to process")
     args = parser.parse_args()
