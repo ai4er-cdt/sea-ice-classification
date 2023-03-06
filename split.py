@@ -45,7 +45,7 @@ def construct_test(tile_info_csv):
 if __name__ == "__main__":
 
     parser = ArgumentParser(description="Sea Ice Train/Val/Test Split")
-    parser.add_argument("--mode", default="train/val", type=str, options=["train/val", "test"],
+    parser.add_argument("--mode", default="train/val", type=str, choices=["train/val", "test"],
                         help="Whether to split train/val images or test images")
     parser.add_argument("--tile_info_csv", type=str, help="Which tile_info_csv to pull from")
     args = parser.parse_args()
