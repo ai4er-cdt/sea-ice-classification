@@ -24,7 +24,8 @@ if __name__ == '__main__':
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
-    parser.add_argument("--overfit", default="False", type=str, help="Whether or not to overfit on a single image")
+    parser.add_argument("--overfit", default="False", type=str, choices=["True", "Semi", "False"],
+                        help="Whether or not to overfit on a single image")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
