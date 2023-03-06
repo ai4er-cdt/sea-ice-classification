@@ -1,3 +1,4 @@
+import pandas as pd
 import pytorch_lightning as pl
 import wandb
 from constants import new_classes
@@ -23,7 +24,7 @@ if __name__ == '__main__':
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
-    parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
+    parser.add_argument("--overfit", default="False", type=str, help="Whether or not to overfit on a single image")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
@@ -46,9 +47,16 @@ if __name__ == '__main__':
 
 
     # get file lists
-    if args.overfit:  # load single train/val file and overfit
-        train_files = ["AP_20181220_00550_[8320,1920]_256x256.tiff"] * args.batch_size * 100
-        val_files = ["AP_20181220_00550_[8320,1920]_256x256.tiff"] * args.batch_size
+    if args.overfit == "True":  # load single train/val file and overfit
+        train_files = ["AP_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 100
+        val_files = ["AP_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size
+    elif args.overfit == "Semi":  # load a few interesting train/val pairs
+        df = pd.read_csv("interesting_images.csv")[:5]
+        files = []
+        for i, row in df.iterrows():
+            files.append(f"{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff")
+        train_files = files * args.batch_size * 20
+        val_files = files
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
             train_files = f.read().splitlines()
