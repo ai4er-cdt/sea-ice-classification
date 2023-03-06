@@ -49,8 +49,8 @@ if __name__ == '__main__':
 
     # get file lists
     if args.overfit == "True":  # load single train/val file and overfit
-        train_files = ["AP_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 100
-        val_files = ["AP_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size
+        train_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 100
+        val_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size
     elif args.overfit == "Semi":  # load a few interesting train/val pairs
         df = pd.read_csv("interesting_images.csv")[:5]
         files = []
