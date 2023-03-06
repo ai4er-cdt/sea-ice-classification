@@ -264,11 +264,13 @@ if __name__ == "__main__":
     chart_ext = "tiff"
     sar_ext = "tif"
     if args.mode == "test":
+        from constants import test_chart_sar_pairs as chart_sar_pairs
         output_folder = Path(open("tile.config").read().strip()) / "test"
         ftp_folder = Path(open("ftp.config").read().strip()) / "test_ims"
         chart_folder = ftp_folder / "rasterised_ice_charts"
         sar_folder = ftp_folder / "original_sar_images"
     else:
+        from constants import chart_sar_pairs
         output_folder = Path(open("tile.config").read().strip())
         ftp_folder = Path(open("ftp.config").read().strip())
         chart_folder = ftp_folder / "rasterised_shapefiles"
@@ -281,7 +283,6 @@ if __name__ == "__main__":
     total_info = []
 
     # Run loading and tiling of image pairs
-    from constants import chart_sar_pairs
     for i, (chart_name, sar_name, region) in enumerate(chart_sar_pairs):
         if i >= n_pairs_to_process:
             break
