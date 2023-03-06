@@ -18,10 +18,11 @@ if __name__ == '__main__':
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str,
                         help="Either 'unet' or smp decoder (e.g.'densenet201','vgg19','resnet34','resnext50_32x4d'), "
-                             "see https://segmentation-modelspytorch.readthedocs.io/en/latest",
-                        required=True)
+                             "see https://segmentation-modelspytorch.readthedocs.io/en/latest", required=False)
     parser.add_argument("--classification_type", default="binary", type=str,
-                        choices=["binary", "ternary", "multiclass"])
+                        choices=["binary", "ternary", "multiclass"], help="Type of classification task")
+    parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
+                        help="Whether to use incidence angle or HH/HV ratio in third band")
     parser.add_argument("--overfit", default=False, type=eval, help="Whether or not to overfit on a single image")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
@@ -40,12 +41,12 @@ if __name__ == '__main__':
 
     # standard input dirs
     tile_folder = open("tile.config").read().strip()
-    sar_folder = f"{tile_folder}/sar"
     chart_folder = f"{tile_folder}/chart"
+    sar_folder = f"{tile_folder}/sar"
+
 
     # get file lists
     if args.overfit:  # load single train/val file and overfit
-        print("overfitting...")
         train_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size * 100
         val_files = ["AP_20181202_00040_[9216,512]_256x256.tiff"] * args.batch_size
     else:  # load full sets of train/val files from pre-determined lists
@@ -65,7 +66,7 @@ if __name__ == '__main__':
     train_chart_files = [f"CHART_{f}" for f in train_files]
     train_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=train_sar_files,
                                   chart_path=chart_folder, chart_files=train_chart_files,
-                                  class_categories=class_categories)
+                                  class_categories=class_categories, sar_band3=args.sar_band3)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
     # load validation data
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     val_chart_files = [f"CHART_{f}" for f in val_files]
     val_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=val_sar_files,
                                 chart_path=chart_folder, chart_files=val_chart_files,
-                                class_categories=class_categories)
+                                class_categories=class_categories, sar_band3=args.sar_band3)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
     # configure model

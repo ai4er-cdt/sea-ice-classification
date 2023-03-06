@@ -17,7 +17,8 @@ class SeaIceDataset(Dataset):
     def __init__(self, sar_path: str, sar_files: list[str],
                  chart_path: str, chart_files: list[str],
                  transform: transforms.Compose = transforms.Compose([]),
-                 class_categories: dict = None):
+                 class_categories: dict = None,
+                 sar_band3: str = "angle"):
         """
         Constructs a SeaIceDataset.
         :param sar_path: Base folder path of SAR images
@@ -26,6 +27,7 @@ class SeaIceDataset(Dataset):
         :param chart_files: List of filenames of charts
         :param transform: Callable transformation to apply to images upon loading
         :param class_categories: Mapping from SIGRID codes to target classes
+        :param sar_band3: "angle" to use SAR incidence angle or "ratio" to use HH/HV as third band
         """
         self.sar_path = sar_path
         self.sar_files = sar_files
@@ -33,6 +35,7 @@ class SeaIceDataset(Dataset):
         self.chart_files = chart_files
         self.transform = transform
         self.class_categories = class_categories
+        self.sar_band3 = sar_band3
 
         # read in precomputed mean and std deviation for HH, HV, incidence angle, and ratio
         metrics_df = pd.read_csv("metrics.csv", delimiter=",")
@@ -44,6 +47,15 @@ class SeaIceDataset(Dataset):
         self.angle_std = metrics_df.iloc[0]["angle_std"]
         self.ratio_mean = metrics_df.iloc[0]["hh_hv_mean"]
         self.ratio_std = metrics_df.iloc[0]["hh_hv_std"]
+
+        # handle sar_band3
+        if self.sar_band3 == "angle":
+            self.band3_mean = self.angle_mean
+            self.band3_std = self.angle_std
+        else:
+            self.sar_path = f"{self.sar_path}_band3"
+            self.band3_mean = self.ratio_mean
+            self.band3_std = self.ratio_std
 
     def __len__(self):
         """
@@ -80,8 +92,8 @@ class SeaIceDataset(Dataset):
             chart = torch.from_numpy(chart)
 
             # normalise the sar data with mean and std deviation for each channel
-            sar_transform = transforms.Compose([transforms.Normalize(mean=[self.hh_mean, self.hv_mean, self.angle_mean],
-                                                                     std=[self.hh_std, self.hv_std, self.angle_std])])
+            sar_transform = transforms.Compose([transforms.Normalize(mean=[self.hh_mean, self.hv_mean, self.band3_mean],
+                                                                     std=[self.hh_std, self.hv_std, self.band3_std])])
             sar = sar_transform(sar)
             sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
 
