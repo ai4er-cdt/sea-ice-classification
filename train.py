@@ -105,7 +105,7 @@ if __name__ == '__main__':
     elif args.criterion == "dice":
         criterion = smp.losses.DiceLoss(mode="multiclass")
     elif args.criterion == "focal":
-        criterion = smp.losses.DiceLoss(mode="multiclass")
+        criterion = smp.losses.FocalLoss(mode="multiclass")
     else:
         raise ValueError(f"Invalid loss function: {args.criterion}.")
 
