@@ -8,9 +8,9 @@ from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from util import SeaIceDataset, Visualise
 from model import Segmentation, UNet
-from torchmetrics import JaccardIndex
 from pathlib import Path
 import segmentation_models_pytorch as smp
+
 
 if __name__ == '__main__':
 
@@ -20,12 +20,16 @@ if __name__ == '__main__':
     parser.add_argument("--model", default="unet", type=str,
                         help="Either 'unet' or smp decoder (e.g.'densenet201','vgg19','resnet34','resnext50_32x4d'), "
                              "see https://segmentation-modelspytorch.readthedocs.io/en/latest", required=False)
+    parser.add_argument("--criterion", default="ce", type=str, choices=["ce", "dice", "focal"],
+                        help="Loss to train with", required=False)
     parser.add_argument("--classification_type", default="binary", type=str,
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
     parser.add_argument("--overfit", default="False", type=str, choices=["True", "Semi", "False"],
                         help="Whether or not to overfit on a single image")
+    parser.add_argument("--overfit_batches", default=5, type=int,
+                        help="How many batches to run per epoch when overfitting")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
@@ -49,14 +53,14 @@ if __name__ == '__main__':
 
     # get file lists
     if args.overfit == "True":  # load single train/val file and overfit
-        train_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 100
-        val_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size
+        train_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * args.overfit_batches
+        val_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 2
     elif args.overfit == "Semi":  # load a few interesting train/val pairs
         df = pd.read_csv("interesting_images.csv")[:5]
         files = []
         for i, row in df.iterrows():
             files.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-        train_files = files * args.batch_size * 20
+        train_files = files * args.batch_size * args.overfit_batches // 5
         val_files = files
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
@@ -90,13 +94,23 @@ if __name__ == '__main__':
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     else:  # assume unet encoder from segmentation_models_pytorch (see smp documentation for valid strings)
-        model = smp.Unet(args.model, encoder_weights='imagenet',
+        model = smp.Unet(args.model, encoder_weights="imagenet",
                          encoder_depth=args.encoder_depth,
                          decoder_channels=decoder_channels,
                          in_channels=3, classes=n_classes)
-    criterion = nn.CrossEntropyLoss()
-    metric = JaccardIndex(task="multiclass", num_classes=n_classes)
-    segmenter = Segmentation(model, criterion, args.learning_rate, metric)
+
+    # configure loss
+    if args.criterion == "ce":
+        criterion = nn.CrossEntropyLoss()
+    elif args.criterion == "dice":
+        criterion = smp.losses.DiceLoss(mode="multiclass")
+    elif args.criterion == "focal":
+        criterion = smp.losses.DiceLoss(mode="multiclass")
+    else:
+        raise ValueError(f"Invalid loss function: {args.criterion}.")
+
+    # configure PyTorch Lightning module
+    segmenter = Segmentation(model, n_classes, criterion, args.learning_rate)
 
     # set up wandb logging
     wandb.init(project="sea-ice-classification")
