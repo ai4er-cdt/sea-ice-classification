@@ -5,14 +5,14 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 import rioxarray as rxr
-import matplotlib.pyplot as plt
+from xarray.core.dataarray import DataArray
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from constants import new_classes, chart_sar_pairs
 from tiling import load_raster
 from argparse import ArgumentParser
 
-def define_band3(sar: dataArray, sar_band3: str = 'angle') -> DataArray:
+def define_band3(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
 
     if sar_band3 == "ratio":
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         train_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_train_files]
         train_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in chart_train_files]
         val_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_val_files]
-        val_y_lst = [recategorize_chart(chart.reindex(y=chart_image.y[::-1]).values, class_categories) for chart in chart_val_files]
+        val_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in chart_val_files]
 
     train_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_train_files]
     val_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_val_files]
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     wandb.init(project="sea-ice-classification")
     if args.name != "default":
         wandb.run.name = args.name
-    wandb_logger = pl.loggers.WandbLogger(project="sea-ice-classification")
-    wandb_logger.watch(model, log="all", log_freq=10)
-    wandb_logger.experiment.config.update(args)
+    # wandb_logger = pl.loggers.WandbLogger(project="sea-ice-classification")
+    # wandb_logger.watch(model, log="all", log_freq=10)
+    # wandb_logger.experiment.config.update(args)
 
