@@ -21,7 +21,7 @@ def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = T
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
 
         Parameters:
-            file_path (str): Path to file
+            file_path (str): Path to raster file
             parse_coordinates (bool): Parses the coordinates of the file, if any
             masked (bool): Reads raster as a mask
             default_name (str): Name for the array
@@ -48,7 +48,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     """
     Slices a given pair of source images using a moving window
     Outputs valid sar and ice chart tiles to disk
-    Also outputs a binary mask corresponding to each ice chart tile (1 = ice, 0 = water)
     Invalid tile pairs are skipped, e.g. due to NaN or values out of range
 
         Parameters:
@@ -157,7 +156,7 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
 
-            ### Update band 3 in sar images and save to new folder ###
+            # Additionally, update band 3 values in tiled sar images and save to a new folder
             # Calculate the ratio of the HH/HV bands
             band1 = sub_sar.sel(band=1)
             band2 = sub_sar.sel(band=2)
@@ -193,7 +192,7 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     """
     
     now = datetime.now().strftime("%d%m%YT%H%M%S")
-    
+
     df = pd.DataFrame(lst).fillna(0)
     csv_file = f'{output_folder}/tile_info_{now}.csv'
     
@@ -210,15 +209,19 @@ if __name__ == "__main__":
     The following files must exist in the working directory: 
 
     data_path.config: 
-        Specifies the path of the local data folder
-        this will vary from system to system
+        Specifies the path of the local folder containing input SAR and ice chart images
+        This needs to be configured by each user and will vary from system to system
+    
+    tile.config:
+        Specifies the output path for the tiled sar images and tiled ice charts
+        This needs to be configured by each user and will vary from system to system
 
     constants.py: 
         Contains a list of the image pairs to be processed
         as well as associated metadata such as geographical region
 
     """
-
+    # Parse command line arguments
     parser = ArgumentParser(description="Sea Ice Tiling")
     parser.add_argument("--mode", default="train/val", type=str, choices=["train/val", "test"],
                         help="Whether to tile train/val images or test images")
