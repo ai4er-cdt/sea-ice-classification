@@ -1,3 +1,8 @@
+"""
+AI4ER GTC - Sea Ice Classification
+Classes for loading the data for input to the models
+and visualising the data
+"""
 import torch
 import numpy as np
 import matplotlib.pyplot as plt

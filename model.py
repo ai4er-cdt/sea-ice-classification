@@ -1,3 +1,7 @@
+"""
+AI4ER GTC - Sea Ice Classification
+Classes for image segmentation and a basic Unet model
+"""
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl

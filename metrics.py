@@ -1,4 +1,9 @@
-
+"""
+AI4ER GTC - Sea Ice Classification
+Functions to calculate mean and standard deviation
+metrics for SAR images. These metrics are called in util.py
+to normalise the SAR images.
+"""
 import numpy as np
 from xarray.core.dataarray import DataArray
 from tiling import load_raster

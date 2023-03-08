@@ -1,3 +1,8 @@
+"""
+AI4ER GTC - Sea Ice Classification
+Script for feeding training and validation data into 
+unet or resnet34 model and saving the model output to wandb
+"""
 import pandas as pd
 import pytorch_lightning as pl
 import wandb
@@ -18,7 +23,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Sea Ice Segmentation Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--model", default="unet", type=str,
-                        help="Either 'unet' or smp decoder (e.g.'densenet201','vgg19','resnet34','resnext50_32x4d'), "
+                        help="Either 'unet' or smp decoder 'resnet34'"
                              "see https://segmentation-modelspytorch.readthedocs.io/en/latest", required=False)
     parser.add_argument("--criterion", default="ce", type=str, choices=["ce", "dice", "focal"],
                         help="Loss to train with", required=False)
@@ -49,7 +54,6 @@ if __name__ == '__main__':
     tile_folder = open("tile.config").read().strip()
     chart_folder = f"{tile_folder}/chart"
     sar_folder = f"{tile_folder}/sar"
-
 
     # get file lists
     if args.overfit == "True":  # load single train/val file and overfit

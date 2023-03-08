@@ -1,3 +1,8 @@
+"""
+AI4ER GTC - Sea Ice Classification
+Functions to create the training, validation 
+& testing datasets
+"""
 import os
 import random
 import pandas as pd

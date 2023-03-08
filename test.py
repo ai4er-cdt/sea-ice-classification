@@ -1,4 +1,8 @@
-
+"""
+AI4ER GTC - Sea Ice Classification
+Script for feeding test data into unet or 
+resnet34 model and saving the model output to wandb
+"""
 import os
 import pytorch_lightning as pl
 import wandb
