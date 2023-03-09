@@ -17,12 +17,14 @@ AI4ER is the the UKRI Centre for Doctoral Training (CDT) in the Application of A
 
 This goal of this 3-month project is to automatically classify sea ice concentration in the East Weddell Sea, Antarctica. The Weddell Sea is an active area of iceberg calving [[1]](https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/) and a critical shipping route for access to the Halley Research Station, a research facility operated by the British Antarctic Survey. Accurate assessments of sea ice concenration in the East Weddell Sea are hence of great importance to ensure the safety and success of future expeditions.
 
+
 ## Demonstration
 
 TO DO:
 - Include link to video
 - Include images of before/after human vs. model ice chart maps
 - Look into [Hugging Face platform](https://huggingface.co/) platform?
+
 
 ## Data
 This project uses two publicly available datasets:
@@ -38,6 +40,7 @@ This project uses three models:
 1. A baseline Random Forest model
 2. A basic Unet
 3. A pretrained resnet34 from the [segmentation_models_pytorch](https://segmentation-modelspytorch.readthedocs.io/en/latest/) Python library, which is distributed under the MIT license. [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ## Code Structure
 TO DO:
