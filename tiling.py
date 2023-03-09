@@ -42,8 +42,8 @@ def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = T
 
 def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, basename: str, region_prefix: str,
                 size_x: int = 256, size_y: int = 256, start_x: int = 0, start_y: int = 0,
-                end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128,
-                nan_threshold: float = 0.0) -> tuple[int, int, list]:
+                end_x: int = None, end_y: int = None, stride_x: int = 128, stride_y: int = 128, nan_threshold: float = 0.0,
+                sar_band3: bool = True, sar_subfolder: str = "sar", sar_band3_subfolder: str = "sar_band3", chart_subfolder: str = "chart") -> tuple[int, int, list]:
     
     """
     Slices a given pair of source images using a moving window
@@ -66,16 +66,16 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             stride_x (int): Stride of the moving window in the horizontal axis
             stride_y (int): Stride of the moving window in the vertical axis
             nan_threshold (float): number in [0,1]
-
+            sar_band3 (bool): Whether to save a separate file with HH/HV as band 3
+            sar_subfolder (str): SAR output folder name
+            sar_band3_subfolder (str): SAR band3 output folder name
+            chart_subfolder (str): Ice Chart output folder name
         Returns:
             img_n (int): Number of image / tile pairs generated
             discared_tiles (int): Number of tile pairs discarded
     """
 
     # Output config
-    sar_subfolder = "sar"
-    sar_band3_subfolder = "sar_band3"
-    chart_subfolder = "chart"
     sar_prefix = "SAR"
     chart_prefix = "CHART"
     output_ext = "tiff"
@@ -156,18 +156,19 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
 
-            # Additionally, update band 3 values in tiled sar images and save to a new folder
-            # Calculate the ratio of the HH/HV bands
-            band1 = sub_sar.sel(band=1)
-            band2 = sub_sar.sel(band=2)
-            band3 = sub_sar.sel(band=3)
-            band3.values = (band1.values / band2.values)
-            # Update the values of band 3 to the HH/HV ratio
-            # Note: do not need to update the CRS or X/Y dimensions because they are the same as band 1 and 2
-            sub_sar.loc[dict(band=3)] = band3
-            # for checking only --> print(sub_sar.sel(band=3).values)
-            # Save the updated SAR image to disk
-            sub_sar.rio.to_raster(Path(pathout_sar_band3), overwrite=True)
+            if sar_band3 == 'True':
+                # Additionally, update band 3 values in tiled sar images and save to a new folder
+                # Calculate the ratio of the HH/HV bands
+                band1 = sub_sar.sel(band=1)
+                band2 = sub_sar.sel(band=2)
+                band3 = sub_sar.sel(band=3)
+                band3.values = (band1.values / band2.values)
+                # Update the values of band 3 to the HH/HV ratio
+                # Note: do not need to update the CRS or X/Y dimensions because they are the same as band 1 and 2
+                sub_sar.loc[dict(band=3)] = band3
+                # for checking only --> print(sub_sar.sel(band=3).values)
+                # Save the updated SAR image to disk
+                sub_sar.rio.to_raster(Path(pathout_sar_band3), overwrite=True)
 
             img_n += 1
 
@@ -226,13 +227,20 @@ if __name__ == "__main__":
     parser.add_argument("--mode", default="train/val", type=str, choices=["train/val", "test"],
                         help="Whether to tile train/val images or test images")
     parser.add_argument("--n_pairs", default=1, type=int, help="Number of pairs to process")
+    parser.add_argument("--resolution", default=256, type=int, help="Width and height of resulting tiles")
+    parser.add_argument("--stride", default=None, type=int, help="Stride of the sliding window")
+    parser.add_argument("--flip_charts", default='True', type=str, help="Whether to flip charts vertically at writing")
+    parser.add_argument("--sar_band3", default='True', type=str, help="Whether to save a separate file with HH/HV as band 3")
+    parser.add_argument("--sar_folder", default='sar', type=str, help="SAR output folder name")
+    parser.add_argument("--sar_band3_folder", default='sar_band3', type=str, help="SAR band3 output folder name")
+    parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart output folder name")
     args = parser.parse_args()
 
     # User config
     n_pairs_to_process = args.n_pairs
-    resolution = 256
-    stride = 128
-    flip_charts = True  # ice charts may need vertical flip before tiling
+    resolution = args.resolution
+    stride = args.stride
+    flip_charts = args.flip_charts  # ice charts may need vertical flip before tiling
     chart_ext = "tiff"
     sar_ext = "tif"
     if args.mode == "test":
@@ -259,12 +267,14 @@ if __name__ == "__main__":
         if i >= n_pairs_to_process:
             break
         chart_image = load_raster(str(Path(f"{chart_folder}/{chart_name}.{chart_ext}")), default_name="Ice Chart")
-        if flip_charts == True:
+        if flip_charts == 'True':
             chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
         sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.{sar_ext}")), default_name="SAR Image")
         name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]  # use sar date as identifier for all outputs
         print(f"Tiling {name_extract} ...")
-        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride)
+        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, 
+                                                       size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride, sar_band3=args.sar_band3,
+                                                       sar_subfolder=args.sar_folder, sar_band3_subfolder=args.sar_band3_folder, chart_subfolder=args.chart_folder)
         total_img += img_n; total_discarded += discarded_tiles
         total_info.extend(info_lst)
 
@@ -276,4 +286,4 @@ if __name__ == "__main__":
     print(f"Proportion discarded: {total_discarded/(total_img+total_discarded)}")
 
     t_end = default_timer()
-    print(f"Execution time: {(t_end - t_start)/60.0} minutes for {n_pairs_to_process} pairs of source images")
+    print(f"Execution time: {(t_end - t_start)/60.0} minutes for {n_pairs_to_process} pair(s) of source image(s)")
