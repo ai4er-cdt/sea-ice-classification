@@ -1,8 +1,8 @@
 
 <br></br>
-<img align="right" src="https://www.cmes.info/img/logos/ai4er_logo_2048px.png" width="100" height="100">
-<img align="centre" src="https://www.bas.ac.uk/wp-content/uploads/2016/11/BAS_colour-736x164.jpg" width="450" height="100">
-<img align="left" src="https://www.cam.ac.uk/sites/www.cam.ac.uk/files/inner-images/logo.jpg" width="400" height="100">
+<img align="right" src="https://www.cmes.info/img/logos/ai4er_logo_2048px.png" width="75" height="75">
+<img align="centre" src="https://www.bas.ac.uk/wp-content/uploads/2016/11/BAS_colour-736x164.jpg" width="350" height="75">
+<img align="left" src="https://www.cam.ac.uk/sites/www.cam.ac.uk/files/inner-images/logo.jpg" width="300" height="75">
 <br><br>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
