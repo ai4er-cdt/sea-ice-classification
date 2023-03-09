@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("--encoder_depth", default=5, type=int,
                         help="Number of decoder stages for smp models (increases number of features)")
     parser.add_argument("--max_epochs", default=100, type=int, help="Number of epochs to fine-tune")
+    parser.add_argument("--num_sanity_val_steps", default=2, type=int, help="Number of batches to sanity check before training")
     args = parser.parse_args()
 
     # standard input dirs

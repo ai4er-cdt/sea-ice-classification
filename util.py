@@ -90,7 +90,7 @@ class SeaIceDataset(Dataset):
                 chart[np.isin(chart, value)] = key
 
         # apply transforms
-        sample = {"sar": sar, "chart": chart}
+        sample = {"sar": sar, "chart": chart, "sar_name": sar_name, "chart_name": chart_name}
         if self.transform is not None:
             # Convert the data to tensors
             sar = torch.from_numpy(sar)
@@ -100,7 +100,8 @@ class SeaIceDataset(Dataset):
             sar_transform = transforms.Compose([transforms.Normalize(mean=[self.hh_mean, self.hv_mean, self.band3_mean],
                                                                      std=[self.hh_std, self.hv_std, self.band3_std])])
             sar = sar_transform(sar)
-            sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long()}
+            sample = {"sar": self.transform(sar), "chart": self.transform(chart).squeeze(0).long(),
+                      "sar_name": sar_name, "chart_name": chart_name}
 
         return sample
 
