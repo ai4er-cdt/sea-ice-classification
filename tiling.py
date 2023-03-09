@@ -270,7 +270,7 @@ if __name__ == "__main__":
         if flip_charts == 'True':
             chart_image = chart_image.reindex(y=chart_image.y[::-1])  # flip vertically
         sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.{sar_ext}")), default_name="SAR Image")
-        name_extract = re.findall("H_[0-9]{8}T", sar_name)[0][2:10]  # use sar date as identifier for all outputs
+        name_extract = re.findall("H_[0-9]{8}T[0-9]{6}", sar_name)[0][2:10]  # use sar datetime as identifier for all outputs
         print(f"Tiling {name_extract} ...")
         img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, 
                                                        size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride, sar_band3=args.sar_band3,
