@@ -32,6 +32,6 @@ new_classes = {None: None,  # use original categories
                 "binary": {0: range(0, 2), 
                            1: range(13, 93)},
                 "ternary": {0: range(0, 2), 
-                            1: range(13, 68), 
+                            1: range(13, 78),
                             2: range(78, 93)}, # This division was arbitrary, we might review this carefully later                           
                 "multiclass": [0, 1, 13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92]}
