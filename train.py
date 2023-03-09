@@ -31,9 +31,9 @@ if __name__ == '__main__':
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
-    parser.add_argument("--overfit", default="False", type=str, choices=["True", "Semi", "False"],
+    parser.add_argument("--user_overfit", default="False", type=str, choices=["True", "Semi", "False"],
                         help="Whether or not to overfit on a single image")
-    parser.add_argument("--overfit_batches", default=5, type=int,
+    parser.add_argument("--user_overfit_batches", default=5, type=int,
                         help="How many batches to run per epoch when overfitting")
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
@@ -49,6 +49,8 @@ if __name__ == '__main__':
                         help="Number of decoder stages for smp models (increases number of features)")
     parser.add_argument("--max_epochs", default=100, type=int, help="Number of epochs to fine-tune")
     parser.add_argument("--num_sanity_val_steps", default=2, type=int, help="Number of batches to sanity check before training")
+    parser.add_argument("--limit_train_batches", default=1.0, type=float, help="Proportion of training dataset to use")
+    parser.add_argument("--limit_val_batches", default=1.0, type=float, help="Proportion of validation dataset to use")
     args = parser.parse_args()
 
     # standard input dirs
@@ -57,27 +59,28 @@ if __name__ == '__main__':
     sar_folder = f"{tile_folder}/sar"
 
     # get file lists
-    if args.overfit == "True":  # load single train/val file and overfit
-        train_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * args.overfit_batches
+    if args.user_overfit == "True":  # load single train/val file and overfit
+        train_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * args.user_overfit_batches
         val_files = ["WS_20180104_02387_[3840,4352]_256x256.tiff"] * args.batch_size * 2
-    elif args.overfit == "Semi":  # load a few interesting train/val pairs
+    elif args.user_overfit == "Semi":  # load a few interesting train/val pairs
         df = pd.read_csv("interesting_images.csv")[:5]
         files = []
         for i, row in df.iterrows():
             files.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-        train_files = files * args.batch_size * (args.overfit_batches // 5)
+        train_files = files * args.batch_size * (args.user_overfit_batches // 5)
         val_files = files
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
             train_files = f.read().splitlines()
         with open(Path(f"{tile_folder}/val_files.txt"), "r") as f:
             val_files = f.read().splitlines()
+    print(f"Length of train file list {len(train_files)}.")
+    print(f"Length of val file list {len(val_files)}.")
 
     # init
     pl.seed_everything(args.seed)
     class_categories = new_classes[args.classification_type]
     n_classes = len(class_categories)
-    decoder_channels = [2 ** (i + 4) for i in range(args.encoder_depth)][::-1]  # e.g. [64,32,16] for encoder_depth = 3
 
     # load training data
     train_sar_files = [f"SAR_{f}" for f in train_files]
@@ -99,6 +102,7 @@ if __name__ == '__main__':
     if args.model == "unet":
         model = UNet(kernel=3, n_channels=3, n_filters=args.n_filters, n_classes=n_classes)
     else:  # assume unet encoder from segmentation_models_pytorch (see smp documentation for valid strings)
+        decoder_channels = [2 ** (i + 4) for i in range(args.encoder_depth)][::-1]  # eg [64,32,16] for encoder_depth=3
         model = smp.Unet(args.model, encoder_weights="imagenet",
                          encoder_depth=args.encoder_depth,
                          decoder_channels=decoder_channels,
@@ -132,4 +136,7 @@ if __name__ == '__main__':
     trainer.callbacks.append(Visualise(val_dataloader))
 
     # train model
+    print(f"Training {len(train_dataset)} examples / {len(train_dataloader)} batches (batch size {args.batch_size}).")
+    print(f"Validating {len(val_dataset)} examples / {len(val_dataloader)} batches (batch size {args.batch_size}).")
+    print(f"All arguments: {args}")
     trainer.fit(segmenter, train_dataloader, val_dataloader)
