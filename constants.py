@@ -35,3 +35,16 @@ new_classes = {None: None,  # use original categories
                             1: range(13, 78),
                             2: range(78, 93)}, # This division was arbitrary, we might review this carefully later                           
                 "multiclass": [0, 1, 13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92]}
+
+# Scikit learn hyperparameters for tuning classification algorithms
+
+model_parameters = {'RandomForest': {'bootstrap': [True, False],
+                                     'max_depth': [25, 50, 75, 100, None],
+                                     'max_features': ['auto', 'sqrt'],
+                                    #  'min_samples_leaf': [100, 2000, 10000],
+                                    #  'min_samples_split': [2000, 5000, 10000],
+                                     'n_estimators': [200, 1000, 2000]},
+                    'DecisionTree': {},
+                    'KNeighbors': {},
+                    'SGD': {},
+                    'MLP': {}}
