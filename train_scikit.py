@@ -8,6 +8,7 @@ import rioxarray as rxr
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from constants import new_classes, chart_sar_pairs
 from tiling import load_raster
 from argparse import ArgumentParser
@@ -89,11 +90,11 @@ if __name__ == '__main__':
     sar_val_names = ['S1B_EW_GRDM_1SDH_20190313T232241_20190313T232345_015342_01CB99_7DC1', 'S1B_EW_GRDM_1SDH_20200117T220139_20200117T220243_019862_02590A_7B65']
 
     # get train file lists
-    sar_train_files = [os.path.join(sar_folder, f'{sar}.{chart_ext}') for sar in chart_sar_pairs if sar not in sar_val_names]
-    chart_train_files = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for chart in chart_sar_pairs if chart not in chart_val_names]    
+    sar_train_files = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs if sar not in sar_val_names]
+    chart_train_files = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs if chart not in chart_val_names]    
     
     # get validation file lists
-    sar_val_files = [os.path.join(sar_folder, f'{sar}.{chart_ext}') for sar in chart_sar_pairs if sar in sar_val_names]
+    sar_val_files = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for sar in chart_sar_pairs if sar in sar_val_names]
     chart_val_files = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for chart in chart_sar_pairs if chart in chart_val_names]    
 
     # Stack DataArrays
@@ -103,12 +104,14 @@ if __name__ == '__main__':
     if args.flip_vertically == 'True':
 
         train_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_train_files]
-        train_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in chart_train_files]
+        train_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in train_y_lst]
         val_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_val_files]
-        val_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in chart_val_files]
-
-    train_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_train_files]
-    val_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_val_files]
+        val_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in val_y_lst]
+    
+    elif args.flip_vertically == 'False':
+    
+        train_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_train_files]
+        val_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_val_files]
 
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
@@ -131,6 +134,11 @@ if __name__ == '__main__':
     rf.fit(X_train_data, Y_train_data)
     
     rf_pred = rf.predict(X_train_data)
+
+    print(f"Accuracy: {accuracy_score(Y_train_data, rf_pred)*100}")
+
+    print(classification_report(Y_train_data, rf_pred))
+    print(confusion_matrix(Y_train_data,rf_pred))
 
     # set up wandb logging
     wandb.init(project="sea-ice-classification")
