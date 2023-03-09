@@ -64,7 +64,7 @@ if __name__ == '__main__':
         files = []
         for i, row in df.iterrows():
             files.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-        train_files = files * args.batch_size * args.overfit_batches // 5
+        train_files = files * args.batch_size * (args.overfit_batches // 5)
         val_files = files
     else:  # load full sets of train/val files from pre-determined lists
         with open(Path(f"{tile_folder}/train_files.txt"), "r") as f:
