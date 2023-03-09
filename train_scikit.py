@@ -1,4 +1,8 @@
-
+"""
+AI4ER GTC - Sea Ice Classification
+Script for feeding training and validation data into 
+scikit-learn classifiers saving the model output to wandb
+"""
 import os
 import wandb
 import pandas as pd
@@ -8,11 +12,12 @@ import rioxarray as rxr
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 from timeit import default_timer
+from joblib import dump
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
-from constants import new_classes, chart_sar_pairs
-from tiling import load_raster
-from argparse import ArgumentParser
+from constants import new_classes, model_parameters
+from argparse import ArgumentParser, BooleanOptionalAction
+
 
 def define_band3(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
 
@@ -54,6 +59,7 @@ def normalize_sar(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
 
     return sar
 
+
 def recategorize_chart(chart: DataArray, class_categories: dict) -> DataArray:
     
     if class_categories is not None:
@@ -72,61 +78,31 @@ if __name__ == '__main__':
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
-    parser.add_argument("--flip_vertically", default="True", type=str, choices=["True", "False"],
-                        help="Whether to flip an ice chart vertically to match the SAR coordinates")
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR output folder name")
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart output folder name")
+    parser.add_argument("--model", default='RandomForest', type=str, 
+                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP'], help="Classification model to use")
+    parser.add_argument("--grid_search", action=BooleanOptionalAction)
+    parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
     args = parser.parse_args()
     
     t_start = default_timer()
+    
     # standard input dirs
     output_folder = Path(open("tile.config").read().strip())
     sar_folder = f"{output_folder}/{args.sar_folder}"
     chart_folder = f"{output_folder}/{args.chart_folder}"
     class_categories = new_classes[args.classification_type]
     n_classes = len(class_categories)
-    
-# Use original images as input ---------------------------
-    # # image_folder = open("ftp.config").read().strip()
-    # chart_folder = f"{image_folder}/rasterised_shapefiles"
-    # sar_folder = f"{image_folder}/dual_band_images"
+    is_binary = True if args.classification_type == 'binary' else False
+    seed = np.random.seed(0)
 
-    # chart_ext = "tiff"
-    # sar_ext = "tif"
-    # # Validation files
-    # chart_val_names = ['20190313', '20200117']
-    # sar_val_names = ['S1B_EW_GRDM_1SDH_20190313T232241_20190313T232345_015342_01CB99_7DC1', 'S1B_EW_GRDM_1SDH_20200117T220139_20200117T220243_019862_02590A_7B65']
-
-    # # get train file lists
-    # sar_train_files = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs if sar not in sar_val_names]
-    # chart_train_files = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs if chart not in chart_val_names]    
-    
-    # # get validation file lists
-    # sar_val_files = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for sar in chart_sar_pairs if sar in sar_val_names]
-    # chart_val_files = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for chart in chart_sar_pairs if chart in chart_val_names]    
-
-    # # Stack DataArrays
-    # train_x_lst = [normalize_sar(define_band3(rxr.open_rasterio(x, parse_coordinates=True), sar_band3=args.sar_band3), sar_band3=args.sar_band3).values for x in sar_train_files]
-    # val_x_lst = [normalize_sar(define_band3(rxr.open_rasterio(x, parse_coordinates=True), sar_band3=args.sar_band3), sar_band3=args.sar_band3).values for x in sar_val_files]
-
-    # if args.flip_vertically == 'True':
-
-    #     train_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_train_files]
-    #     train_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in train_y_lst]
-    #     val_y_lst = [rxr.open_rasterio(y, parse_coordinates=True, masked=True) for y in chart_val_files]
-    #     val_y_lst = [recategorize_chart(chart.reindex(y=chart.y[::-1]).values, class_categories) for chart in val_y_lst]
-    
-    # elif args.flip_vertically == 'False':
-    
-    #     train_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_train_files]
-    #     val_y_lst = [recategorize_chart(rxr.open_rasterio(y, parse_coordinates=True, masked=True).values, class_categories) for y in chart_val_files]
-# ---------------------------------------------------
     sar_filenames = os.listdir(sar_folder)
     chart_filenames = os.listdir(chart_folder)
     
     if args.sample == 'True':
-        np.random.seed(0)
+        
         sample_n = np.random.randint(len(sar_filenames), size=(50))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
@@ -136,8 +112,6 @@ if __name__ == '__main__':
 
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
-    # val_x = np.stack(val_x_lst)
-    # val_y = np.stack(val_y_lst)
 
     # Reorder dimensions
     x_train = np.moveaxis(train_x, 1, -1)
@@ -145,27 +119,40 @@ if __name__ == '__main__':
     y_train = np.moveaxis(train_y, 1, -1)
     Y_train_data = y_train.reshape(-1, 1)
 
-    # x_val = np.moveaxis(val_x, 1, -1)
-    # X_val_data = x_val.reshape(-1, 3)
-    # y_val = np.moveaxis(val_y, 1, -1)
-    # Y_val_data = y_val.reshape(-1, 1)
-
-    import multiprocessing
-
-    n_cores = multiprocessing.cpu_count()
-    # RF
-    rf = RandomForestClassifier(n_jobs=n_cores)
-    rf.fit(X_train_data, Y_train_data.ravel())
+    # Models
+    print(f'Training {args.model}')
+    if args.model == 'RandomForest':
+        model = RandomForestClassifier(n_jobs=args.n_cores, random_state=seed)
+    elif args.model == 'DecisionTree':
+        from sklearn.tree import  DecisionTreeClassifier
+        model = DecisionTreeClassifier(random_state=seed)
+    elif args.model == 'KNeighbors':
+        from sklearn.neighbors import KNeighborsClassifier
+        model = KNeighborsClassifier(n_jobs=args.n_cores)
+    elif args.model == 'SGD':
+        from sklearn.linear_model import SGDClassifier
+        model = SGDClassifier(n_jobs=args.n_cores, random_state=seed)
+    elif args.model == 'MLP':
+        from sklearn.neural_network import MLPClassifier
+        model = MLPClassifier(random_state=seed)
     
-    rf_pred = rf.predict(X_train_data)
-    y_probas = rf.predict_proba(X_train_data)
+    # Grid search tuning
+    if args.grid_search:
+        print(f'Training {args.model} with GridSearch')
+        from sklearn.model_selection import GridSearchCV
+        model = GridSearchCV(model, param_grid=model_parameters[args.model], cv=args.cv_fold, n_jobs=args.n_cores)
+        
+    model.fit(X_train_data, Y_train_data.ravel())
+    
+    y_pred = model.predict(X_train_data)
+    y_prob = model.predict_proba(X_train_data)
 
     labels = list(class_categories.keys())
     
-    print(f"Accuracy: {accuracy_score(Y_train_data, rf_pred)*100}")
+    print(f"Accuracy: {accuracy_score(Y_train_data, y_pred)*100}")
 
-    print(classification_report(Y_train_data, rf_pred))
-    print(confusion_matrix(Y_train_data,rf_pred))
+    print(classification_report(Y_train_data, y_pred))
+    print(confusion_matrix(Y_train_data,y_pred))
 
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
@@ -175,13 +162,9 @@ if __name__ == '__main__':
     wandb.init(project="sea-ice-classification")
     if args.name != "default":
         wandb.run.name = args.name
-    wandb.sklearn.plot_classifier(rf, 
-                              X_train_data, X_train_data, 
-                              Y_train_data, Y_train_data, 
-                              rf_pred, y_probas, 
-                              labels, 
-                              is_binary=True, 
-                              model_name='RandomForest')
-
+    wandb.sklearn.plot_classifier(model, X_train_data, X_train_data, Y_train_data, Y_train_data,
+                                  y_pred, y_prob, labels, is_binary=is_binary, model_name=args.model)
+    
+    dump(model, f'{wandb.run.name}.joblib') 
+    
     wandb.finish()
-
