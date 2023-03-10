@@ -28,8 +28,8 @@ if __name__ == '__main__':
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
-    parser.add_argument("--sar_folder", default='sar', type=str, help="SAR output folder name")
-    parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart output folder name")
+    parser.add_argument("--sar_folder", default='sar', type=str, help="SAR input folder name")
+    parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--model", default='RandomForest', type=str, 
                         choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP'], help="Classification model to use")
     parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
@@ -40,9 +40,9 @@ if __name__ == '__main__':
     t_start = default_timer()
     
     # standard input dirs
-    output_folder = Path(open("tile.config").read().strip())
-    sar_folder = f"{output_folder}/{args.sar_folder}"
-    chart_folder = f"{output_folder}/{args.chart_folder}"
+    input_folder = Path(open("tile.config").read().strip())
+    sar_folder = f"{input_folder}/{args.sar_folder}"
+    chart_folder = f"{input_folder}/{args.chart_folder}"
     class_categories = new_classes[args.classification_type]
     n_classes = len(class_categories)
     sar_band3 = args.sar_band3
@@ -134,6 +134,6 @@ if __name__ == '__main__':
                                   y_pred, y_prob, labels, is_binary=is_binary, model_name=args.model)
     
     Path.mkdir(Path(f"scikit_models"), parents=True, exist_ok=True)
-    dump(model, Path(f'scikit_models/{wandb.run.name}.joblib') )
+    dump(model, Path(f'scikit_models/{wandb.run.name}.joblib'))
     
     wandb.finish()
