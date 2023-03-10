@@ -40,7 +40,6 @@ new_classes = {None: None,  # use original categories
 
 model_parameters = {'RandomForest': {'bootstrap': [True, False],
                                      'max_depth': [25, 50, 75, 100, None],
-                                     'max_features': ['auto', 'sqrt'],
                                     #  'min_samples_leaf': [100, 2000, 10000],
                                     #  'min_samples_split': [2000, 5000, 10000],
                                      'n_estimators': [200, 1000, 2000]},
