@@ -70,9 +70,3 @@ def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=T
     new_raster = recategorize_chart(chart.values, class_categories)
     
     return new_raster
-
-def load_sar_wrapper(file_path: str):
-    return load_sar(file_path, sar_band3)
-        
-def load_chart_wrapper(file_path: str):
-    return load_chart(file_path, class_categories)
