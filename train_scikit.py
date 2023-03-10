@@ -13,7 +13,7 @@ from joblib import dump
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from constants import new_classes, model_parameters
-from util_scikit import load_chart_wrapper, load_sar_wrapper, load_chart, load_sar
+from util_scikit import load_chart, load_sar
 from argparse import ArgumentParser, BooleanOptionalAction
 
 
@@ -65,9 +65,8 @@ if __name__ == '__main__':
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
-    print('Loading tiles')
-        
     if args.load_parallel:
+	print('Loading tiles in parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         
@@ -76,6 +75,7 @@ if __name__ == '__main__':
         
         mp_pool.close()
     else:
+	print('Loading tiles')
         train_x_lst = [load_sar(x, sar_band3=sar_band3) for x in sar_filenames]
         train_y_lst = [load_chart(x, class_categories) for x in chart_filenames]
 
