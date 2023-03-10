@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 import rioxarray as rxr
+import multiprocessing as mp
 from xarray.core.dataarray import DataArray
 from pathlib import Path
 from timeit import default_timer
@@ -69,11 +70,29 @@ def recategorize_chart(chart: DataArray, class_categories: dict) -> DataArray:
     return chart
 
 
+def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True):
+    
+    sar = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates)
+    band3_sar = define_band3(sar, sar_band3)
+    normalized_raster = normalize_sar(band3_sar, sar_band3)
+    
+    return normalized_raster.values
+
+
+def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True):
+    
+    chart = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates, masked=masked)
+    new_raster = recategorize_chart(chart.values, class_categories)
+    
+    return new_raster
+
+
 if __name__ == '__main__':
     
     parser = ArgumentParser(description="Sea Ice Random Forest Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--sample", default="False", type=str, choices=['True', 'False'], help="Run a sample of the dataset")
+    parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
@@ -82,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart output folder name")
     parser.add_argument("--model", default='RandomForest', type=str, 
                         choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP'], help="Classification model to use")
-    parser.add_argument("--grid_search", action=BooleanOptionalAction)
+    parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
     parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
     args = parser.parse_args()
@@ -99,16 +118,33 @@ if __name__ == '__main__':
     seed = np.random.seed(0)
 
     sar_filenames = os.listdir(sar_folder)
+    sar_filenames = [os.path.join(sar_folder, x) for x in sar_filenames]
     chart_filenames = os.listdir(chart_folder)
+    chart_filenames = [os.path.join(chart_folder, x) for x in chart_filenames]
     
     if args.sample == 'True':
         
         sample_n = np.random.randint(len(sar_filenames), size=(50))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
-
-    train_x_lst = [normalize_sar(define_band3(rxr.open_rasterio(os.path.join(sar_folder, x), parse_coordinates=True), sar_band3=args.sar_band3), sar_band3=args.sar_band3).values for x in sar_filenames]
-    train_y_lst = [recategorize_chart(rxr.open_rasterio(os.path.join(chart_folder, x), parse_coordinates=True, masked=True).values, class_categories) for x in chart_filenames]   
+        
+    if args.load_parallel:
+        cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
+        mp_pool = mp.Pool(cores)
+        
+        def load_sar_wrapper(file_path: str):
+            return load_sar(file_path, args.sar_band3)
+        
+        def load_chart_wrapper(file_path: str):
+            return load_chart(file_path, class_categories)
+        
+        train_x_lst = mp_pool.map(load_sar_wrapper, sar_filenames)
+        train_y_lst = mp_pool.map(load_chart_wrapper, chart_filenames)
+        
+        mp_pool.close()
+    else:
+        train_x_lst = [normalize_sar(define_band3(rxr.open_rasterio(x, parse_coordinates=True), sar_band3=args.sar_band3), sar_band3=args.sar_band3).values for x in sar_filenames]
+        train_y_lst = [recategorize_chart(rxr.open_rasterio(x, parse_coordinates=True, masked=True).values, class_categories) for x in chart_filenames]   
 
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
@@ -165,6 +201,7 @@ if __name__ == '__main__':
     wandb.sklearn.plot_classifier(model, X_train_data, X_train_data, Y_train_data, Y_train_data,
                                   y_pred, y_prob, labels, is_binary=is_binary, model_name=args.model)
     
-    dump(model, f'{wandb.run.name}.joblib') 
+    Path.mkdir(Path(f"scikit_models"), parents=True, exist_ok=True)
+    dump(model, Path(f'scikit_models/{wandb.run.name}.joblib') )
     
     wandb.finish()
