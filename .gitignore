@@ -5,6 +5,8 @@ tile.config
 # ignore wandb logs
 wandb/
 sea-ice-classification/
+# ignore scikit models
+scikit_models/
 # ignore pycharm folders
 __pycache__/
 .idea/
