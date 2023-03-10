@@ -2,19 +2,16 @@
 AI4ER GTC - Sea Ice Classification
 Functions for loading and tiling of raster files
 """
-import os
-import random
 import re
 import numpy as np
 import pandas as pd
 import xarray as xr
 import rioxarray as rxr
-from random import shuffle
 from xarray.core.dataarray import DataArray
-from pathlib import Path
 from datetime import datetime
 from timeit import default_timer
 from argparse import ArgumentParser
+from pathlib import Path
 
 
 def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = True, default_name: str = None,
@@ -24,7 +21,7 @@ def load_raster(file_path: str, parse_coordinates: bool = True, masked: bool = T
     Loads and returns xarray.core.dataarray.DataArray for a given raster file
 
         Parameters:
-            file_path (str): Path to file
+            file_path (str): Path to raster file
             parse_coordinates (bool): Parses the coordinates of the file, if any
             masked (bool): Reads raster as a mask
             default_name (str): Name for the array
@@ -51,7 +48,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     """
     Slices a given pair of source images using a moving window
     Outputs valid sar and ice chart tiles to disk
-    Also outputs a binary mask corresponding to each ice chart tile (1 = ice, 0 = water)
     Invalid tile pairs are skipped, e.g. due to NaN or values out of range
 
         Parameters:
@@ -80,10 +76,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     sar_subfolder = "sar"
     sar_band3_subfolder = "sar_band3"
     chart_subfolder = "chart"
-    # binary_subfolder = "binary_chart"
     sar_prefix = "SAR"
     chart_prefix = "CHART"
-    # binary_prefix = "BINARY_CHART"
     output_ext = "tiff"
 
     # Makes sure some parameters have default values according to input
@@ -108,7 +102,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
     Path.mkdir(Path(f"{output_folder}/{sar_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{sar_band3_subfolder}"), parents=True, exist_ok=True)
     Path.mkdir(Path(f"{output_folder}/{chart_subfolder}"), parents=True, exist_ok=True)
-    # Path.mkdir(Path(f"{output_folder}/{binary_subfolder}"), parents=True, exist_ok=True)
 
     img_n = 0  # Counter for image pairs generated (+1 for file naming convention)
     discarded_tiles = 0  # Counter for discarded tile pairs
@@ -139,11 +132,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
                 discarded_tiles += 1
                 continue
 
-            # Make a copy of the chart and set to binary classification objective
-            # sub_binary = sub_chart.copy()
-            # sub_binary.values[sub_binary.values <= 1] = 0  # these are water pixels
-            # sub_binary.values[sub_binary.values > 1] = 1  # these are ice pixels
-
             # Majority of filename is common to both sar and chart tiles
             file_n = "{:0>5}".format(img_n + 1)
             common_fname = f"{region_prefix}_{basename}_{file_n}_[{col},{row}]_{size_x}x{size_y}.{output_ext}"
@@ -152,7 +140,6 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             pathout_sar = f"{output_folder}/{sar_subfolder}/{sar_prefix}_{common_fname}"
             pathout_sar_band3 = f"{output_folder}/{sar_band3_subfolder}/{sar_prefix}_{common_fname}"
             pathout_chart = f"{output_folder}/{chart_subfolder}/{chart_prefix}_{common_fname}"
-            # pathout_binary = f"{output_folder}/{binary_subfolder}/{binary_prefix}_{common_fname}"
 
             # Save tile info in a dictionary
             unique, counts = np.unique(sub_chart, return_counts=True)
@@ -163,15 +150,13 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
             info['size'] = size_x
             info['col'] = col
             info['row'] = row
-            
             info_lst.append(info)
 
             # Save to disk
             sub_sar.rio.to_raster(Path(pathout_sar))
             sub_chart.rio.to_raster(Path(pathout_chart))
-            # sub_binary.rio.to_raster(Path(pathout_binary))
 
-            ### Update band 3 in sar images and save to new folder ###
+            # Additionally, update band 3 values in tiled sar images and save to a new folder
             # Calculate the ratio of the HH/HV bands
             band1 = sub_sar.sel(band=1)
             band2 = sub_sar.sel(band=2)
@@ -207,68 +192,13 @@ def create_tile_info_dataframe(lst: list, output_folder: str) -> pd.DataFrame:
     """
     
     now = datetime.now().strftime("%d%m%YT%H%M%S")
-    
+
     df = pd.DataFrame(lst).fillna(0)
     csv_file = f'{output_folder}/tile_info_{now}.csv'
     
     df.to_csv(csv_file, index=False)
-    
+
     return df
-
-def compute_metrics(array: DataArray) -> dict:
-    
-    """
-    Computes the mean and the standard deviation of each band of a SAR image.
-    In addition, computes mean and std of the ratio between HH and HV.
-
-        Parameters:
-            array (xarray.core.dataarray.DataArray): Original SAR image
-            
-        Returns:
-            info (dict): Array metrics for future use
-    """
-    
-    hh_hv = array[0] / (array[1] + 0.0001)
-    hh_mean = np.nanmean(array[0].values)
-    hv_mean = np.nanmean(array[1].values)
-    angle_mean = np.nanmean(array[2].values)
-    hh_hv_mean = np.nanmean(hh_hv.values)
-    hh_std = np.nanstd(array[0].values)
-    hv_std = np.nanstd(array[1].values)
-    angle_std = np.nanstd(array[2].values)
-    hh_hv_std = np.nanstd(hh_hv.values)
-    
-    info = {'hh_mean': hh_mean, 'hh_std': hh_std,
-            'hv_mean': hv_mean, 'hv_std': hv_std,
-            'angle_mean': angle_mean, 'angle_std': angle_std,
-            'hh_hv_mean': hh_hv_mean, 'hh_hv_std': hh_hv_std}
-    
-    return info
-
-def construct_train_val_test():
-    """
-    Construct train/val/test set splits with filenames into CSVs based on tile_info CSVs
-    """
-    tile_directory = "../Tiled_images"
-    tile_info_csvs = [f for f in os.listdir(tile_directory) if ".csv" in f]
-    train, test = [], []
-    for filename in tile_info_csvs:
-        table = pd.read_csv(f"../Tiled_images/{filename}")
-        for i, row in table.iterrows():
-            if row["region"] == "AP":  # TODO: reconsider whether to train on WS
-                train.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-            else:  # TODO: reconsider whether to test on AP
-                test.append(f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
-    random.seed(0)
-    shuffle(train)  # ensure our train/val split is reproducibly random
-    n_train = int(0.8 * len(train))
-    train, val = train[:n_train], train[n_train:]
-    with open(f"{tile_directory}/train_files.txt", "w") as f:
-        f.write("\n".join(train))
-    with open(f"{tile_directory}/val_files.txt", "w") as f:
-        f.write("\n".join(val))
-    with open(f"{tile_directory}/test_files.txt", "w") as f:
-        f.write("\n".join(test))
 
 
 if __name__ == "__main__":
@@ -279,32 +209,44 @@ if __name__ == "__main__":
     The following files must exist in the working directory: 
 
     data_path.config: 
-        Specifies the path of the local data folder
-        this will vary from system to system
+        Specifies the path of the local folder containing input SAR and ice chart images
+        This needs to be configured by each user and will vary from system to system
+    
+    tile.config:
+        Specifies the output path for the tiled sar images and tiled ice charts
+        This needs to be configured by each user and will vary from system to system
 
     constants.py: 
         Contains a list of the image pairs to be processed
         as well as associated metadata such as geographical region
 
     """
-
+    # Parse command line arguments
     parser = ArgumentParser(description="Sea Ice Tiling")
+    parser.add_argument("--mode", default="train/val", type=str, choices=["train/val", "test"],
+                        help="Whether to tile train/val images or test images")
     parser.add_argument("--n_pairs", default=1, type=int, help="Number of pairs to process")
     args = parser.parse_args()
 
     # User config
     n_pairs_to_process = args.n_pairs
-    output_folder = "../Tiled_images"
-    resolution = 256*4
-    stride = 128*4
+    resolution = 256
+    stride = 128
     flip_charts = True  # ice charts may need vertical flip before tiling
-
-    # Standard config 
-    base_folder = open("data_path.config").read().strip()
-    chart_folder = Path(f"{base_folder}/FTP_data/rasterised_shapefiles")  
-    sar_folder = Path(f"{base_folder}/FTP_data/dual_band_images")
     chart_ext = "tiff"
     sar_ext = "tif"
+    if args.mode == "test":
+        from constants import test_chart_sar_pairs as chart_sar_pairs
+        output_folder = Path(open("tile.config").read().strip()) / "test"
+        ftp_folder = Path(open("ftp.config").read().strip()) / "test_ims"
+        chart_folder = ftp_folder / "rasterised_ice_charts"
+        sar_folder = ftp_folder / "original_sar_images"
+    else:
+        from constants import chart_sar_pairs
+        output_folder = Path(open("tile.config").read().strip())
+        ftp_folder = Path(open("ftp.config").read().strip())
+        chart_folder = ftp_folder / "rasterised_shapefiles"
+        sar_folder = ftp_folder / "dual_band_images"
     
     # Prepare to run
     t_start = default_timer()
@@ -313,7 +255,6 @@ if __name__ == "__main__":
     total_info = []
 
     # Run loading and tiling of image pairs
-    from constants import chart_sar_pairs
     for i, (chart_name, sar_name, region) in enumerate(chart_sar_pairs):
         if i >= n_pairs_to_process:
             break
@@ -328,8 +269,7 @@ if __name__ == "__main__":
         total_info.extend(info_lst)
 
     create_tile_info_dataframe(total_info, output_folder)
-    construct_train_val_test()
-    
+
     print("TILING COMPLETE\n")
     print(f"Total image pairs generated: {total_img}")
     print(f"Total discarded tile pairs: {total_discarded}")

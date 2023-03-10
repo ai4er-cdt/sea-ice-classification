@@ -1,36 +1,56 @@
+"""
+AI4ER GTC - Sea Ice Classification
+Classes for image segmentation and a basic Unet model
+"""
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-import pandas as pd
-import torchvision.transforms as transforms
 
 
 class Segmentation(pl.LightningModule):
+    
     """
     A LightningModule designed to perform image segmentation.
     """
 
     def __init__(self,
                  model: nn.Module,
+                 n_classes: int,
                  criterion: callable,
-                 learning_rate: float,
-                 metric: callable,
-                 ):
+                 learning_rate: float):
         """
         Construct a Segmentation LightningModule.
         Note that we keep hyperparameters separate from dataloaders to prevent data leakage at test time.
         :param model: PyTorch model
+        :param n_classes: Number of target classes
         :param criterion: PyTorch loss function against which to train model
         :param learning_rate: Float learning rate for our optimiser
-        :param metric: PyTorch function for model evaluation
         """
         super().__init__()
         self.model = model
+        self.n_classes = n_classes
         self.criterion = criterion
         self.learning_rate = learning_rate
-        self.metric = metric
-        self.save_hyperparameters()
+
+        self.metrics = MetricCollection({
+            "jaccard": JaccardIndex(task="multiclass", num_classes=n_classes),
+            "dice": Dice(task="multiclass", num_classes=n_classes),
+            "micro_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="micro"),
+            "macro_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="macro"),
+            "weighted_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="weighted"),
+            "micro_precision": Precision(task="multiclass", num_classes=n_classes, average="micro"),
+            "macro_precision": Precision(task="multiclass", num_classes=n_classes, average="macro"),
+            "weighted_precision": Precision(task="multiclass", num_classes=n_classes, average="weighted"),
+            "micro_recall": Recall(task="multiclass", num_classes=n_classes, average="micro"),
+            "macro_recall": Recall(task="multiclass", num_classes=n_classes, average="macro"),
+            "weighted_recall": Recall(task="multiclass", num_classes=n_classes, average="weighted"),
+            "micro_f1": F1Score(task="multiclass", num_classes=n_classes, average="micro"),
+            "macro_f1": F1Score(task="multiclass", num_classes=n_classes, average="macro"),
+            "weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted")
+        })
+
+        self.save_hyperparameters(ignore=["model", "criterion"])
 
     def forward(self, x):
         """
@@ -96,10 +116,14 @@ class Segmentation(pl.LightningModule):
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
-        metric = self.metric(y_hat_pred, y)
-        self.log("val_loss", loss)
-        self.log("val_metric", metric)
+        self.metrics.update(y_hat_pred, y)
         return loss
+
+    def validation_epoch_end(self, outputs):
+        loss = torch.stack(outputs).mean().detach().cpu().item()
+        self.log("val_loss", loss)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.metrics.reset()
 
     def testing_step(self, batch, batch_idx):
         # Load metrics and calculate mean across all images for each channel
@@ -125,9 +149,14 @@ class Segmentation(pl.LightningModule):
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
-        metric = self.metric(y_hat_pred, y)
+        self.metrics.update(y_hat_pred, y)
+        return loss
+
+    def testing_epoch_end(self, outputs):
+        loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("test_loss", loss)
-        self.log("test_metric", metric)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.metrics.reset()
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
@@ -137,10 +166,13 @@ class Segmentation(pl.LightningModule):
 
 
 class UNet(nn.Module):
+    
     """
     CNN with skip connections (U-Net) for image segmentation (pixel-wise classification).
     """
+    
     def __init__(self, kernel: int, n_channels: int, n_filters: int, n_classes: int):
+        
         """
         Construct a UNet.
         See following graphical diagram.
@@ -152,6 +184,7 @@ class UNet(nn.Module):
         :param n_filters: Number of convolutional filters to apply in each convolutional layer
         :param n_classes: Number of possible classes for output pixels
         """
+        
         super().__init__()
         stride = 2  # how far to slide the convolutional filter on each step
         padding = kernel // 2  # how much to pad the image on edges of input

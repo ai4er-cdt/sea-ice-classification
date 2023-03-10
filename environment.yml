@@ -2,6 +2,8 @@ name: sea-ice-classification
 channels:
   - defaults
   - conda-forge
+  - nvidia
+  - pytorch
 dependencies:
   - torchvision
   - pytorch-cuda=11.7
@@ -17,4 +19,5 @@ dependencies:
   - torchmetrics
   - pathlib
   - xarray
-prefix: /home/users/arm99/miniconda3/envs/sea-ice-classification
+  - segmentation-models-pytorch
+  - cartopy

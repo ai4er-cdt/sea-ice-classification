@@ -1,11 +1,14 @@
-# data path config is particular to each local environment
+# ignore local data path config
 data_path.config
+ftp.config
+tile.config
 # ignore wandb logs
 wandb/
 sea-ice-classification/
 # ignore pycharm folders
-.idea/
 __pycache__/
 .idea/
 # ignore model checkpoint files
 *.ckpt
+# ignore testing notebook
+handy.ipynb
