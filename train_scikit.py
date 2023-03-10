@@ -47,6 +47,12 @@ if __name__ == '__main__':
     sar_band3 = args.sar_band3
     is_binary = True if args.classification_type == 'binary' else False
     seed = np.random.seed(0)
+    
+    def load_sar_wrapper(file_path: str):
+        return load_sar(file_path, sar_band3)
+        
+    def load_chart_wrapper(file_path: str):
+        return load_chart(file_path, class_categories)
 
     sar_filenames = os.listdir(sar_folder)
     sar_filenames = [os.path.join(sar_folder, x) for x in sar_filenames]
@@ -58,6 +64,8 @@ if __name__ == '__main__':
         sample_n = np.random.randint(len(sar_filenames), size=(50))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
+        
+    print('Loading tiles')
         
     if args.load_parallel:
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
@@ -75,10 +83,8 @@ if __name__ == '__main__':
     train_y = np.stack(train_y_lst)
 
     # Reorder dimensions
-    x_train = np.moveaxis(train_x, 1, -1)
-    X_train_data = x_train.reshape(-1, 3)
-    y_train = np.moveaxis(train_y, 1, -1)
-    Y_train_data = y_train.reshape(-1, 1)
+    X_train_data = np.moveaxis(train_x, 1, -1).reshape(-1, 3)
+    Y_train_data = np.moveaxis(train_y, 1, -1).reshape(-1, 1)
 
     # Models
     print(f'Training {args.model}')
