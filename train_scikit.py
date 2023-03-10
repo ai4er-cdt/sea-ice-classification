@@ -5,86 +5,16 @@ scikit-learn classifiers saving the model output to wandb
 """
 import os
 import wandb
-import pandas as pd
 import numpy as np
-import xarray as xr
-import rioxarray as rxr
 import multiprocessing as mp
-from xarray.core.dataarray import DataArray
 from pathlib import Path
 from timeit import default_timer
 from joblib import dump
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from constants import new_classes, model_parameters
+from util_scikit import load_chart_wrapper, load_sar_wrapper, load_chart, load_sar
 from argparse import ArgumentParser, BooleanOptionalAction
-
-
-def define_band3(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
-
-    if sar_band3 == "ratio":
-
-        band1 = sar.sel(band=1)
-        band2 = sar.sel(band=2)
-        band3 = sar.sel(band=3)
-        band3.values = (band1.values / (band2.values + 0.0001))
-        # Update the values of band 3 to the HH/HV ratio
-        # Note: do not need to update the CRS or X/Y dimensions because they are the same as band 1 and 2
-        sar.loc[dict(band=3)] = band3
-
-    return sar
-    
-
-def normalize_sar(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
-
-    metrics_df = pd.read_csv("metrics.csv", delimiter=",")
-    hh_mean = metrics_df.iloc[0]["hh_mean"]
-    hh_std = metrics_df.iloc[0]["hh_std"]
-    hv_mean = metrics_df.iloc[0]["hv_mean"]
-    hv_std = metrics_df.iloc[0]["hv_std"]
-    angle_mean = metrics_df.iloc[0]["angle_mean"]
-    angle_std = metrics_df.iloc[0]["angle_std"]
-    ratio_mean = metrics_df.iloc[0]["hh_hv_mean"]
-    ratio_std = metrics_df.iloc[0]["hh_hv_std"]
-
-    if sar_band3 == "angle":
-        band3_mean = angle_mean
-        band3_std = angle_std
-    else:
-        band3_mean = ratio_mean
-        band3_std = ratio_std
-
-    sar[0] = (sar[0] - hh_mean) / hh_std
-    sar[1] = (sar[1] - hv_mean) / hv_std
-    sar[2] = (sar[2] - band3_mean) / band3_std
-
-    return sar
-
-
-def recategorize_chart(chart: DataArray, class_categories: dict) -> DataArray:
-    
-    if class_categories is not None:
-        for key, value in class_categories.items():
-            chart[np.isin(chart, value)] = key
-
-    return chart
-
-
-def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True):
-    
-    sar = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates)
-    band3_sar = define_band3(sar, sar_band3)
-    normalized_raster = normalize_sar(band3_sar, sar_band3)
-    
-    return normalized_raster.values
-
-
-def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True):
-    
-    chart = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates, masked=masked)
-    new_raster = recategorize_chart(chart.values, class_categories)
-    
-    return new_raster
 
 
 if __name__ == '__main__':
@@ -114,6 +44,7 @@ if __name__ == '__main__':
     chart_folder = f"{output_folder}/{args.chart_folder}"
     class_categories = new_classes[args.classification_type]
     n_classes = len(class_categories)
+    sar_band3 = args.sar_band3
     is_binary = True if args.classification_type == 'binary' else False
     seed = np.random.seed(0)
 
@@ -132,19 +63,13 @@ if __name__ == '__main__':
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         
-        def load_sar_wrapper(file_path: str):
-            return load_sar(file_path, args.sar_band3)
-        
-        def load_chart_wrapper(file_path: str):
-            return load_chart(file_path, class_categories)
-        
         train_x_lst = mp_pool.map(load_sar_wrapper, sar_filenames)
         train_y_lst = mp_pool.map(load_chart_wrapper, chart_filenames)
         
         mp_pool.close()
     else:
-        train_x_lst = [normalize_sar(define_band3(rxr.open_rasterio(x, parse_coordinates=True), sar_band3=args.sar_band3), sar_band3=args.sar_band3).values for x in sar_filenames]
-        train_y_lst = [recategorize_chart(rxr.open_rasterio(x, parse_coordinates=True, masked=True).values, class_categories) for x in chart_filenames]   
+        train_x_lst = [load_sar(x, sar_band3=sar_band3) for x in sar_filenames]
+        train_y_lst = [load_chart(x, class_categories) for x in chart_filenames]
 
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
