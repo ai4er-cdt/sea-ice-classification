@@ -5,7 +5,9 @@ Classes for image segmentation and a basic Unet model
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from torchmetrics import JaccardIndex, Dice, Accuracy, Precision, Recall, F1Score, MetricCollection
+from torchmetrics import MetricCollection
+from torchmetrics import JaccardIndex, Dice, Accuracy, Precision, Recall, F1Score  # classification
+from torchmetrics import R2Score, MeanSquaredError, MeanAbsoluteError  # regression
 
 
 class Segmentation(pl.LightningModule):
@@ -33,6 +35,8 @@ class Segmentation(pl.LightningModule):
         self.criterion = criterion
         self.learning_rate = learning_rate
 
+        # evaluation metrics
+        # for details see: https://torchmetrics.readthedocs.io/en/stable/
         self.metrics = MetricCollection({
             "jaccard": JaccardIndex(task="multiclass", num_classes=n_classes),
             "dice": Dice(task="multiclass", num_classes=n_classes),
@@ -47,7 +51,11 @@ class Segmentation(pl.LightningModule):
             "weighted_recall": Recall(task="multiclass", num_classes=n_classes, average="weighted"),
             "micro_f1": F1Score(task="multiclass", num_classes=n_classes, average="micro"),
             "macro_f1": F1Score(task="multiclass", num_classes=n_classes, average="macro"),
-            "weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted")
+            "weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted"),
+            "r_squared": R2Score(),  # regression-based metrics for ternary and multiclass models
+            "mean_squared_error": MeanSquaredError(squared=True),
+            "root_mean_squared_error": MeanSquaredError(squared=False),
+            "mean_absolute_error": MeanAbsoluteError()
         })
 
         self.save_hyperparameters(ignore=["model", "criterion"])
