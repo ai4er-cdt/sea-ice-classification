@@ -234,6 +234,7 @@ if __name__ == "__main__":
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR output folder name")
     parser.add_argument("--sar_band3_folder", default='sar_band3', type=str, help="SAR band3 output folder name")
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart output folder name")
+    parser.add_argument("--nan_threshold", default=0.0, type=float, help="Nan threshold to filter tiles")
     args = parser.parse_args()
 
     # User config
@@ -272,7 +273,7 @@ if __name__ == "__main__":
         sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.{sar_ext}")), default_name="SAR Image")
         name_extract = re.findall("H_[0-9]{8}T[0-9]{6}", sar_name)[0][2:10]  # use sar datetime as identifier for all outputs
         print(f"Tiling {name_extract} ...")
-        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, 
+        img_n, discarded_tiles, info_lst = tile_raster(sar_image, chart_image, output_folder, name_extract, region, nan_threshold=args.nan_threshold,
                                                        size_x=resolution, size_y=resolution, stride_x=stride, stride_y=stride, sar_band3=args.sar_band3,
                                                        sar_subfolder=args.sar_folder, sar_band3_subfolder=args.sar_band3_folder, chart_subfolder=args.chart_folder)
         total_img += img_n; total_discarded += discarded_tiles
