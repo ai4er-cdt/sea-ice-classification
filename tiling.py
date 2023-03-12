@@ -88,8 +88,8 @@ def tile_raster(sar_image: DataArray, ice_chart: DataArray, output_folder: str, 
 
     # Checkpoint of parameters
     assert len(region_prefix) == 2
-    assert 0 < size_x <= sar_image.shape[2] // 2
-    assert 0 < size_y <= sar_image.shape[1] // 2
+    assert 0 < size_x <= sar_image.shape[2]
+    assert 0 < size_y <= sar_image.shape[1]
     assert 0 <= start_x <= sar_image.shape[2]
     assert 0 <= start_y <= sar_image.shape[1]
     assert 0 < end_x <= sar_image.shape[2]
