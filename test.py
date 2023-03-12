@@ -30,12 +30,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # standard input dirs
-    base_folder = "../Tiled_images"
-    sar_folder = f"{base_folder}/sar"
-    chart_folder = f"{base_folder}/binary_chart"
-    test_folder = f"{base_folder}/test"
-
-    # standard input dirs
     tile_folder = open("tile.config").read().strip()
     chart_folder = f"{tile_folder}/test/chart"
     sar_folder = f"{tile_folder}/test/sar"
