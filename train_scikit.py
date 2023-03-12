@@ -12,8 +12,8 @@ from timeit import default_timer
 from joblib import dump
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
-from constants import new_classes, model_parameters
-from util_scikit import load_chart, load_sar
+from constants import new_classes, model_parameters, chart_sar_pairs
+from util_scikit import load_chart, load_sar, crop_image
 from argparse import ArgumentParser, BooleanOptionalAction
 
 
@@ -35,14 +35,13 @@ if __name__ == '__main__':
     parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
     parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
+    parser.add_argument("--data_type", default='tile', type=str, choices=['tile', 'original'], help='Run the classifier on the tiles or the original images')
+    parser.add_argument("--flip_vertically", action=BooleanOptionalAction,
+                        help="Whether to flip an ice chart vertically to match the SAR coordinates")
     args = parser.parse_args()
     
     t_start = default_timer()
     
-    # standard input dirs
-    input_folder = Path(open("tile.config").read().strip())
-    sar_folder = f"{input_folder}/{args.sar_folder}"
-    chart_folder = f"{input_folder}/{args.chart_folder}"
     class_categories = new_classes[args.classification_type]
     n_classes = len(class_categories)
     sar_band3 = args.sar_band3
@@ -54,14 +53,34 @@ if __name__ == '__main__':
         
     def load_chart_wrapper(file_path: str):
         return load_chart(file_path, class_categories)
-
-    sar_filenames = os.listdir(sar_folder)
-    sar_filenames = [os.path.join(sar_folder, x) for x in sar_filenames]
-    chart_filenames = os.listdir(chart_folder)
-    chart_filenames = [os.path.join(chart_folder, x) for x in chart_filenames]
+    
+    def load_chart_wrapper_vertical(file_path: str):
+        return load_chart(file_path, class_categories, flip_vertically=args.flip_vertically)
+    
+    # standard input dirs
+    
+    if args.data_type == 'tile':
+        input_folder = Path(open("tile.config").read().strip())
+        sar_folder = f"{input_folder}/{args.sar_folder}"
+        chart_folder = f"{input_folder}/{args.chart_folder}"
+        
+        sar_filenames = os.listdir(sar_folder)
+        chart_filenames = os.listdir(chart_folder)
+        sar_filenames = [os.path.join(sar_folder, x) for x in sar_filenames]
+        chart_filenames = [os.path.join(chart_folder, x) for x in chart_filenames]
+        
+    elif args.data_type == 'original':
+        input_folder = Path(open("ftp.config").read().strip())
+        sar_folder = f"{input_folder}/dual_band_images"
+        chart_folder = f"{input_folder}/rasterised_shapefiles"
+        chart_ext = "tiff"
+        sar_ext = "tif"
+        
+        sar_filenames = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs]
+        chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
     if args.sample == 'True':
-        
+        assert args.n_sample <= len(sar_filenames)
         sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
@@ -72,13 +91,33 @@ if __name__ == '__main__':
         mp_pool = mp.Pool(cores)
         
         train_x_lst = mp_pool.map(load_sar_wrapper, sar_filenames)
-        train_y_lst = mp_pool.map(load_chart_wrapper, chart_filenames)
+        if args.data_type == 'original' and args.flip_vertically:
+            train_y_lst = mp_pool.map(load_chart_wrapper_vertical, chart_filenames)
+        else:
+            train_y_lst = mp_pool.map(load_chart_wrapper, chart_filenames)
         
         mp_pool.close()
     else:
         print('Loading tiles')
-        train_x_lst = [load_sar(x, sar_band3=sar_band3) for x in sar_filenames]
-        train_y_lst = [load_chart(x, class_categories) for x in chart_filenames]
+        train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
+        train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
+        
+    if args.data_type == 'original':
+        height_min = 100000000
+        width_min = 100000000
+        height_max = 0
+        width_max = 0
+        for chart in train_y_lst:
+            shape = chart.shape
+            if shape[1] < height_min:
+                height_min = shape[1]
+            if shape[2] < width_min:
+                width_min = shape[2]
+        
+        dim_min = min([height_min, width_min])
+                
+        train_x_lst = [crop_image(sar, height_min, width_min) for sar in train_x_lst]
+        train_y_lst = [crop_image(chart, height_min, width_min) for chart in train_y_lst]
 
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
