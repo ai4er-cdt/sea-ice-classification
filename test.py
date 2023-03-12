@@ -30,16 +30,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # standard input dirs
-    base_folder = "../Tiled_images"
-    sar_folder = f"{base_folder}/sar"
-    chart_folder = f"{base_folder}/binary_chart"
+    tile_folder = open("tile.config").read().strip()
+    chart_folder = f"{tile_folder}/test/chart"
+    sar_folder = f"{tile_folder}/test/sar"
+    test_folder = f"{tile_folder}/test"
 
     # get test file list
     if args.overfit:  # load single train/val/test file and overfit
         print("overfitting...")
         test_files = ["AP_20181202_00040_[9216,512]_256x256.tiff", "AP_20181202_00040_[9216,512]_256x256.tiff"]
     else:  
-        with open(Path(f"{base_folder}/test_files.txt"), "r") as f:
+        with open(Path(f"{test_folder}/test_files.txt"), "r") as f:
             test_files = f.read().splitlines()
     
     # init

@@ -5,7 +5,9 @@ Classes for image segmentation and a basic Unet model
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from torchmetrics import JaccardIndex, Dice, Accuracy, Precision, Recall, F1Score, MetricCollection
+from torchmetrics import MetricCollection
+from torchmetrics import JaccardIndex, Dice, Accuracy, Precision, Recall, F1Score  # classification
+from torchmetrics import R2Score, MeanSquaredError, MeanAbsoluteError  # regression
 
 
 class Segmentation(pl.LightningModule):
@@ -33,6 +35,8 @@ class Segmentation(pl.LightningModule):
         self.criterion = criterion
         self.learning_rate = learning_rate
 
+        # evaluation metrics
+        # for details see: https://torchmetrics.readthedocs.io/en/stable/
         self.metrics = MetricCollection({
             "jaccard": JaccardIndex(task="multiclass", num_classes=n_classes),
             "dice": Dice(task="multiclass", num_classes=n_classes),
@@ -47,8 +51,12 @@ class Segmentation(pl.LightningModule):
             "weighted_recall": Recall(task="multiclass", num_classes=n_classes, average="weighted"),
             "micro_f1": F1Score(task="multiclass", num_classes=n_classes, average="micro"),
             "macro_f1": F1Score(task="multiclass", num_classes=n_classes, average="macro"),
-            "weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted")
+            "weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted"),
+            "mean_squared_error": MeanSquaredError(squared=True),
+            "root_mean_squared_error": MeanSquaredError(squared=False),
+            "mean_absolute_error": MeanAbsoluteError()
         })
+        self.r2_score = R2Score()  # requires flattening inputs
 
         self.save_hyperparameters(ignore=["model", "criterion"])
 
@@ -68,39 +76,24 @@ class Segmentation(pl.LightningModule):
         :return: Loss from this batch of data for use in backprop
         """
         x, y = batch["sar"], batch["chart"].squeeze().long()
-        if y.min() < 0 or y.max() > 2:
-            yy = y.view(y.shape[0], -1)  # reshape into batch_size x n_pixels
-            mins, min_indices = yy.min(dim=1)  # get min value per image in batch
-            maxs, max_indices = yy.max(dim=1)  # get max value per image in batch
-            to_investigate = torch.logical_or(mins < 0, maxs > 2).nonzero().cpu().ravel().tolist()
-            print("Target out of range")
-            print(batch["chart_name"])
-            print(to_investigate)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["sar"], batch["chart"].squeeze().long()
-        if y.min() < 0 or y.max() > 2:
-            yy = y.view(y.shape[0], -1)  # reshape into batch_size x n_pixels
-            mins, min_indices = yy.min(dim=1)  # get min value per image in batch
-            maxs, max_indices = yy.max(dim=1)  # get max value per image in batch
-            to_investigate = torch.logical_or(mins < 0, maxs > 2).nonzero().cpu().ravel().tolist()
-            print("Target out of range")
-            print(batch["chart_name"])
-            print(to_investigate)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
         self.metrics.update(y_hat_pred, y)
+        self.r2_score.update(y_hat_pred.view(-1), y.view(-1))
         return loss
 
     def validation_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
-        self.log("val_loss", loss)
-        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.log("val_loss", loss, sync_dist=True)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def testing_step(self, batch, batch_idx):
@@ -109,12 +102,13 @@ class Segmentation(pl.LightningModule):
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
         self.metrics.update(y_hat_pred, y)
+        self.r2_score.update(y_hat_pred.view(-1), y.view(-1))
         return loss
 
     def testing_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
-        self.log("test_loss", loss)
-        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.log("test_loss", loss, sync_dist=True)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def configure_optimizers(self):
