@@ -88,7 +88,7 @@ if __name__ == '__main__':
     train_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=train_sar_files,
                                   chart_path=chart_folder, chart_files=train_chart_files,
                                   class_categories=class_categories, sar_band3=args.sar_band3)
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # load validation data
     val_sar_files = [f"SAR_{f}" for f in val_files]
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     val_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=val_sar_files,
                                 chart_path=chart_folder, chart_files=val_chart_files,
                                 class_categories=class_categories, sar_band3=args.sar_band3)
-    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # configure model
     if args.model == "unet":
