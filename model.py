@@ -92,7 +92,7 @@ class Segmentation(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, sync_dist=True)
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
