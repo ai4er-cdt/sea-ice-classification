@@ -38,6 +38,8 @@ if __name__ == '__main__':
     parser.add_argument("--data_type", default='tile', type=str, choices=['tile', 'original'], help='Run the classifier on the tiles or the original images')
     parser.add_argument("--flip_vertically", action=BooleanOptionalAction,
                         help="Whether to flip an ice chart vertically to match the SAR coordinates")
+    parser.add_argument("--impute", action=BooleanOptionalAction,
+                        help="Whether to impute missing values in SAR and Ice charts")
     args = parser.parse_args()
     
     t_start = default_timer()
@@ -79,7 +81,7 @@ if __name__ == '__main__':
         sar_filenames = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs]
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
-    if args.sample == 'True':
+    if args.sample:
         assert args.n_sample <= len(sar_filenames)
         sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
@@ -126,6 +128,14 @@ if __name__ == '__main__':
     X_train_data = np.moveaxis(train_x, 1, -1).reshape(-1, 3)
     Y_train_data = np.moveaxis(train_y, 1, -1).reshape(-1, 1)
 
+    if args.impute:
+        from sklearn.impute import KNNImputer
+        x_imputer = KNNImputer(n_neighbors=8)
+        y_imputer = KNNImputer(n_neighbors=8)
+        
+        X_train_data = x_imputer.transform(X_train_data)
+        Y_train_data = y_imputer.transform(Y_train_data)        
+            
     # Models
     print(f'Training {args.model}')
     if args.model == 'RandomForest':
