@@ -107,7 +107,7 @@ class Segmentation(pl.LightningModule):
 
     def testing_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
-        self.log("test_loss", loss)
+        self.log("test_loss", loss, sync_dist=True)
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
