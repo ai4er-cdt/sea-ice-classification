@@ -64,9 +64,11 @@ def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True):
     return normalized_raster.values
 
 
-def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True):
+def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True, flip_vertically: bool=False):
     
     chart = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates, masked=masked)
+    if flip_vertically:
+        chart.reindex(y=chart.y[::-1])
     new_raster = recategorize_chart(chart.values, class_categories)
     
     return new_raster
