@@ -78,7 +78,7 @@ class Segmentation(pl.LightningModule):
         x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -93,7 +93,7 @@ class Segmentation(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("val_loss", loss)
-        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def testing_step(self, batch, batch_idx):
@@ -108,7 +108,7 @@ class Segmentation(pl.LightningModule):
     def testing_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("test_loss", loss)
-        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True)
+        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def configure_optimizers(self):
