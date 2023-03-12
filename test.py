@@ -35,6 +35,12 @@ if __name__ == "__main__":
     chart_folder = f"{base_folder}/binary_chart"
     test_folder = f"{base_folder}/test"
 
+    # standard input dirs
+    tile_folder = open("tile.config").read().strip()
+    chart_folder = f"{tile_folder}/test/chart"
+    sar_folder = f"{tile_folder}/test/sar"
+    test_folder = f"{tile_folder}/test"
+
     # get test file list
     if args.overfit:  # load single train/val/test file and overfit
         print("overfitting...")
