@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 import rioxarray as rxr
+from numpy import ndarray
 from xarray.core.dataarray import DataArray
 
 def define_band3(sar: DataArray, sar_band3: str = 'angle') -> DataArray:
@@ -55,7 +56,7 @@ def recategorize_chart(chart: DataArray, class_categories: dict) -> DataArray:
     return chart
 
 
-def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True):
+def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True) -> ndarray:
     
     sar = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates)
     band3_sar = define_band3(sar, sar_band3)
@@ -64,7 +65,7 @@ def load_sar(file_path: str, sar_band3: bool, parse_coordinates: bool=True):
     return normalized_raster.values
 
 
-def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True, flip_vertically: bool=False):
+def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=True, masked: bool=True, flip_vertically: bool=False) -> ndarray:
     
     chart = rxr.open_rasterio(file_path, parse_coordinates=parse_coordinates, masked=masked)
     if flip_vertically:
@@ -72,3 +73,12 @@ def load_chart(file_path: str, class_categories: dict, parse_coordinates: bool=T
     new_raster = recategorize_chart(chart.values, class_categories)
     
     return new_raster
+
+    
+def crop_image(raster: DataArray, height_size: int, width_size: int) -> ndarray:
+    _, height, width = raster.shape
+    y_pad = (height-height_size) // 2
+    x_pad = (width-width_size) // 2
+    raster = raster[:, y_pad:y_pad+height_size, x_pad:x_pad+width_size]
+    
+    return raster
