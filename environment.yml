@@ -12,6 +12,7 @@ dependencies:
   - numpy
   - rioxarray
   - matplotlib
+  - scikit-learn
   - scikit-image
   - wandb
   - pandas
