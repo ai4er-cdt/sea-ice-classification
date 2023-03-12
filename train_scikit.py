@@ -21,7 +21,7 @@ if __name__ == '__main__':
     
     parser = ArgumentParser(description="Sea Ice Random Forest Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
-    parser.add_argument("--sample", default="False", type=str, choices=['True', 'False'], help="Run a sample of the dataset")
+    parser.add_argument("--sample", action=BooleanOptionalAction, help="Run a sample of the dataset")
     parser.add_argument("--n_sample", default=100, type=int, help="Number of tiles to use in the sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
