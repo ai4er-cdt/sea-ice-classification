@@ -177,8 +177,8 @@ if __name__ == '__main__':
     l_loss = log_loss(Y_train_data, y_pred)
     precision = precision_score(Y_train_data, y_pred)
     recall = recall_score(Y_train_data, y_pred)
-    roc_auc = roc_auc_score(Y_train_data, y_prob)
-    roc = roc_curve(Y_train_data, y_prob)
+    roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1])
+    roc = roc_curve(Y_train_data, y_prob[:, 1])
     
     print(classification_report(Y_train_data, y_pred))
     print(confusion_matrix(Y_train_data, y_pred))
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     wandb.sklearn.plot_calibration_curve(model, X_train_data, Y_train_data, args.model)
     wandb.sklearn.plot_summary_metrics(model, X_train_data, Y_train_data, X_train_data, Y_train_data)
     # wandb.sklearn.plot_learning_curve(model, X, y)
-    wandb.log(args)
+    # wandb.log(args)
     wandb.log({"accuracy": accuracy,
                'f1': f1,
                'jaccard': jaccard,
