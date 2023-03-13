@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR input folder name")
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--model", default='RandomForest', type=str, 
-                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP'], help="Classification model to use")
+                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP', 'SVC'], help="Classification model to use")
     parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
     parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
@@ -148,10 +148,13 @@ if __name__ == '__main__':
         model = KNeighborsClassifier(n_jobs=args.n_cores)
     elif args.model == 'SGD':
         from sklearn.linear_model import SGDClassifier
-        model = SGDClassifier(n_jobs=args.n_cores, random_state=seed)
+        model = SGDClassifier(loss='log_loss', n_jobs=args.n_cores, random_state=seed)
     elif args.model == 'MLP':
         from sklearn.neural_network import MLPClassifier
         model = MLPClassifier(random_state=seed)
+    elif args.model == 'SVC':
+        from sklearn.svm import SVC
+        model = SVC(probability=True, random_state=seed)
     
     # Grid search tuning
     if args.grid_search:
