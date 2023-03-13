@@ -10,8 +10,6 @@ import multiprocessing as mp
 from pathlib import Path
 from timeit import default_timer
 from joblib import dump
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from constants import new_classes, model_parameters, chart_sar_pairs
 from util_scikit import load_chart, load_sar, crop_image
 from argparse import ArgumentParser, BooleanOptionalAction
@@ -40,6 +38,7 @@ if __name__ == '__main__':
                         help="Whether to flip an ice chart vertically to match the SAR coordinates")
     parser.add_argument("--impute", action=BooleanOptionalAction,
                         help="Whether to impute missing values in SAR and Ice charts")
+    parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
     args = parser.parse_args()
     
     t_start = default_timer()
@@ -48,7 +47,7 @@ if __name__ == '__main__':
     n_classes = len(class_categories)
     sar_band3 = args.sar_band3
     is_binary = True if args.classification_type == 'binary' else False
-    seed = np.random.seed(0)
+    seed = np.random.seed(args.seed)
     
     def load_sar_wrapper(file_path: str):
         return load_sar(file_path, sar_band3)
@@ -139,6 +138,7 @@ if __name__ == '__main__':
     # Models
     print(f'Training {args.model}')
     if args.model == 'RandomForest':
+        from sklearn.ensemble import RandomForestClassifier
         model = RandomForestClassifier(n_jobs=args.n_cores, random_state=seed)
     elif args.model == 'DecisionTree':
         from sklearn.tree import  DecisionTreeClassifier
@@ -169,10 +169,19 @@ if __name__ == '__main__':
 
     labels = list(class_categories.keys())
     
-    print(f"Accuracy: {accuracy_score(Y_train_data, y_pred)*100}")
-
+    from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, classification_report, ConfusionMatrixDisplay
+    
+    accuracy = accuracy_score(Y_train_data, y_pred)
+    f1 = f1_score(Y_train_data, y_pred)
+    jaccard = jaccard_score(Y_train_data, y_pred)
+    l_loss = log_loss(Y_train_data, y_pred)
+    precision = precision_score(Y_train_data, y_pred)
+    recall = recall_score(Y_train_data, y_pred)
+    roc_auc = roc_auc_score(Y_train_data, y_prob)
+    roc = roc_curve(Y_train_data, y_prob)
+    
     print(classification_report(Y_train_data, y_pred))
-    print(confusion_matrix(Y_train_data,y_pred))
+    print(confusion_matrix(Y_train_data, y_pred))
 
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
@@ -184,6 +193,21 @@ if __name__ == '__main__':
         wandb.run.name = args.name
     wandb.sklearn.plot_classifier(model, X_train_data, X_train_data, Y_train_data, Y_train_data,
                                   y_pred, y_prob, labels, is_binary=is_binary, model_name=args.model)
+    wandb.sklearn.plot_roc(Y_train_data, y_prob, labels)
+    wandb.sklearn.plot_class_proportions(Y_train_data, Y_train_data, labels)
+    wandb.sklearn.plot_precision_recall(Y_train_data, y_prob, labels)
+    wandb.sklearn.plot_calibration_curve(model, X_train_data, Y_train_data, args.model)
+    wandb.sklearn.plot_summary_metrics(model, X_train_data, Y_train_data, X_train_data, Y_train_data)
+    # wandb.sklearn.plot_learning_curve(model, X, y)
+    wandb.log(args)
+    wandb.log({"accuracy": accuracy,
+               'f1': f1,
+               'jaccard': jaccard,
+               'log_loss': l_loss,
+               'precision': precision,
+               'recall': recall,
+               'roc_auc': roc_auc,
+               'roc': roc})
     
     Path.mkdir(Path(f"scikit_models"), parents=True, exist_ok=True)
     dump(model, Path(f'scikit_models/{wandb.run.name}.joblib'))
