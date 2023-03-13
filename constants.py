@@ -52,4 +52,7 @@ model_parameters = {'RandomForest': {'bootstrap': [True, False],
                     'MLP': {},
                     'SVC': {'kernel': ['linear', 'poly'],
                             'degree': [3, 10, 50],
-                            'C': [1.0, 5.0, 10.0]}}
+                            'C': [1.0, 5.0, 10.0]},
+                    'LogisticRegression': {'penalty': ['l1', 'l2', 'elasticnet'],
+                                           'C': [1.0, 5.0, 10.0],
+                                           'l1_ratio': [0.0, 0.5, 1.0]}}
