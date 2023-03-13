@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR input folder name")
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--model", default='RandomForest', type=str, 
-                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP', 'SVC'], help="Classification model to use")
+                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP', 'SVC', 'LogisticRegression'], help="Classification model to use")
     parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
     parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     patch_sklearn()
 
     if args.impute:
+        print(f'Imputing missing values')
         from sklearn.impute import KNNImputer
         x_imputer = KNNImputer(n_neighbors=8)
         y_imputer = KNNImputer(n_neighbors=8)
@@ -158,6 +159,9 @@ if __name__ == '__main__':
     elif args.model == 'SVC':
         from sklearn.svm import SVC
         model = SVC(probability=True, random_state=seed)
+    elif args.model == 'LogisticRegression':
+        from sklearn.linear_model import LogisticRegression
+        model = LogisticRegression(solver='saga', multi_class='multinomial', n_jobs=args.n_cores, random_state=seed)
     
     # Grid search tuning
     if args.grid_search:
