@@ -126,6 +126,9 @@ if __name__ == '__main__':
     # Reorder dimensions
     X_train_data = np.moveaxis(train_x, 1, -1).reshape(-1, 3)
     Y_train_data = np.moveaxis(train_y, 1, -1).reshape(-1, 1)
+    
+    from sklearnex import patch_sklearn
+    patch_sklearn()
 
     if args.impute:
         from sklearn.impute import KNNImputer
