@@ -49,6 +49,7 @@ if __name__ == '__main__':
     is_binary = True if args.classification_type == 'binary' else False
     seed = np.random.seed(args.seed)
     
+    # Function wrappers for parallel execution    
     def load_sar_wrapper(file_path: str):
         return load_sar(file_path, sar_band3)
         
@@ -58,8 +59,7 @@ if __name__ == '__main__':
     def load_chart_wrapper_vertical(file_path: str):
         return load_chart(file_path, class_categories, flip_vertically=args.flip_vertically)
     
-    # standard input dirs
-    
+    # standard input dirs    
     if args.data_type == 'tile':
         input_folder = Path(open("tile.config").read().strip())
         sar_folder = f"{input_folder}/{args.sar_folder}"
@@ -80,12 +80,14 @@ if __name__ == '__main__':
         sar_filenames = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs]
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
+    # Sample tiles according to argsparse    
     if args.sample:
         assert args.n_sample <= len(sar_filenames)
         sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
+    # Standard or parallel loading of tiles        
     if args.load_parallel:
         print('Loading tiles in parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
@@ -103,6 +105,7 @@ if __name__ == '__main__':
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
+    # Crop tiles to the smallest size from the original SAR/Ice charts        
     if args.data_type == 'original':
         height_min = 100000000
         width_min = 100000000
@@ -120,6 +123,8 @@ if __name__ == '__main__':
         train_x_lst = [crop_image(sar, height_min, width_min) for sar in train_x_lst]
         train_y_lst = [crop_image(chart, height_min, width_min) for chart in train_y_lst]
 
+
+    # Stack list of images as ndarray
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
 
@@ -127,9 +132,11 @@ if __name__ == '__main__':
     X_train_data = np.moveaxis(train_x, 1, -1).reshape(-1, 3)
     Y_train_data = np.moveaxis(train_y, 1, -1).reshape(-1, 1)
     
+    # Intel optimizer for Intel machines
     from sklearnex import patch_sklearn
     patch_sklearn()
 
+    # Impute missing values if required
     if args.impute:
         print(f'Imputing missing values')
         from sklearn.impute import KNNImputer
@@ -176,6 +183,7 @@ if __name__ == '__main__':
 
     labels = list(class_categories.keys())
     
+    # Sklearn metrics
     from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, classification_report, ConfusionMatrixDisplay
     
     accuracy = accuracy_score(Y_train_data, y_pred)

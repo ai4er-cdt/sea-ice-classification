@@ -37,7 +37,7 @@ new_classes = {None: None,  # use original categories
                 "multiclass": [0, 1, 13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92]}
 
 # Scikit learn hyperparameters for tuning classification algorithms
-
+# Model : {parameter: [possible values]}
 model_parameters = {'RandomForest': {'bootstrap': [True, False],
                                      'max_depth': [25, 50, 75, 100, None],
                                     #  'min_samples_leaf': [100, 2000, 10000],
