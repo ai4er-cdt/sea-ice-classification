@@ -99,7 +99,7 @@ if __name__ == '__main__':
         
         mp_pool.close()
     else:
-        print('Loading tiles')
+        print(f'Loading {len(train_x_lst)} tiles')
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
