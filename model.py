@@ -56,7 +56,7 @@ class Segmentation(pl.LightningModule):
             "root_mean_squared_error": MeanSquaredError(squared=False),
             "mean_absolute_error": MeanAbsoluteError()
         })
-        self.r2_score = R2Score()  # requires flattening inputs
+        self.r2_score = MetricCollection({"r2score": R2Score()})  # requires flattening inputs
 
         self.save_hyperparameters(ignore=["model", "criterion"])
 
@@ -94,6 +94,7 @@ class Segmentation(pl.LightningModule):
         loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("val_loss", loss, sync_dist=True)
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
+        self.log_dict(self.r2_score.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def testing_step(self, batch, batch_idx):
@@ -109,6 +110,7 @@ class Segmentation(pl.LightningModule):
         loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("test_loss", loss, sync_dist=True)
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
+        self.log_dict(self.r2_score.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
 
     def configure_optimizers(self):

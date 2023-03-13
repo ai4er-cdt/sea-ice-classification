@@ -133,8 +133,8 @@ if __name__ == '__main__':
         x_imputer = KNNImputer(n_neighbors=8)
         y_imputer = KNNImputer(n_neighbors=8)
         
-        X_train_data = x_imputer.transform(X_train_data)
-        Y_train_data = y_imputer.transform(Y_train_data)        
+        X_train_data = x_imputer.fit_transform(X_train_data)
+        Y_train_data = y_imputer.fit_transform(Y_train_data)        
             
     # Models
     print(f'Training {args.model}')
