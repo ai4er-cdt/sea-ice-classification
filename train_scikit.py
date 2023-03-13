@@ -209,6 +209,9 @@ if __name__ == '__main__':
                'roc_auc': roc_auc,
                'roc': roc})
     
+    if args.grid_search:
+        wandb.log(model.best_params_)
+    
     Path.mkdir(Path(f"scikit_models"), parents=True, exist_ok=True)
     dump(model, Path(f'scikit_models/{wandb.run.name}.joblib'))
     
