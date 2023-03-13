@@ -14,6 +14,7 @@ dependencies:
   - matplotlib
   - scikit-learn
   - scikit-image
+  - scikit-learn-intelex
   - wandb
   - pandas
   - pytorch-lightning
