@@ -187,7 +187,7 @@ if __name__ == '__main__':
     # Sklearn metrics
     from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, r2_score, mean_absolute_error, mean_squared_error, classification_report, ConfusionMatrixDisplay
     
-    jaccard = jaccard_score(Y_train_data, y_pred)
+    jaccard = jaccard_score(Y_train_data, y_pred, average='macro')
     accuracy = accuracy_score(Y_train_data, y_pred)
     micro_precision = precision_score(Y_train_data, y_pred, average="micro")
     macro_precision = precision_score(Y_train_data, y_pred, average="macro")
