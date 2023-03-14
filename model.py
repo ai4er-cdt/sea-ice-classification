@@ -58,6 +58,29 @@ class Segmentation(pl.LightningModule):
         })
         self.r2_score = MetricCollection({"r2score": R2Score()})  # requires flattening inputs
 
+        # test evaluation metrics
+        # for details see: https://torchmetrics.readthedocs.io/en/stable/
+        self.test_metrics = MetricCollection({
+            "test_jaccard": JaccardIndex(task="multiclass", num_classes=n_classes),
+            "test_dice": Dice(task="multiclass", num_classes=n_classes),
+            "test_micro_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="micro"),
+            "test_macro_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="macro"),
+            "test_weighted_accuracy": Accuracy(task="multiclass", num_classes=n_classes, average="weighted"),
+            "test_micro_precision": Precision(task="multiclass", num_classes=n_classes, average="micro"),
+            "test_macro_precision": Precision(task="multiclass", num_classes=n_classes, average="macro"),
+            "test_weighted_precision": Precision(task="multiclass", num_classes=n_classes, average="weighted"),
+            "test_micro_recall": Recall(task="multiclass", num_classes=n_classes, average="micro"),
+            "test_macro_recall": Recall(task="multiclass", num_classes=n_classes, average="macro"),
+            "test_weighted_recall": Recall(task="multiclass", num_classes=n_classes, average="weighted"),
+            "test_micro_f1": F1Score(task="multiclass", num_classes=n_classes, average="micro"),
+            "test_macro_f1": F1Score(task="multiclass", num_classes=n_classes, average="macro"),
+            "test_weighted_f1": F1Score(task="multiclass", num_classes=n_classes, average="weighted"),
+            "test_mean_squared_error": MeanSquaredError(squared=True),
+            "test_root_mean_squared_error": MeanSquaredError(squared=False),
+            "test_mean_absolute_error": MeanAbsoluteError()
+        })
+        self.test_r2_score = MetricCollection({"test_r2score": R2Score()})  # requires flattening inputs
+
         self.save_hyperparameters(ignore=["model", "criterion"])
 
     def forward(self, x):
@@ -96,22 +119,24 @@ class Segmentation(pl.LightningModule):
         self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.log_dict(self.r2_score.compute(), on_step=False, on_epoch=True, sync_dist=True)
         self.metrics.reset()
+        self.r2_score.reset()
 
-    def testing_step(self, batch, batch_idx):
+    def test_step(self, batch, batch_idx):
         x, y = batch["sar"], batch["chart"].squeeze().long()
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         y_hat_pred = y_hat.argmax(dim=1)
-        self.metrics.update(y_hat_pred, y)
-        self.r2_score.update(y_hat_pred.view(-1), y.view(-1))
+        self.test_metrics.update(y_hat_pred, y)
+        self.test_r2_score.update(y_hat_pred.view(-1), y.view(-1))
         return loss
 
-    def testing_epoch_end(self, outputs):
+    def test_epoch_end(self, outputs):
         loss = torch.stack(outputs).mean().detach().cpu().item()
         self.log("test_loss", loss, sync_dist=True)
-        self.log_dict(self.metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
-        self.log_dict(self.r2_score.compute(), on_step=False, on_epoch=True, sync_dist=True)
-        self.metrics.reset()
+        self.log_dict(self.test_metrics.compute(), on_step=False, on_epoch=True, sync_dist=True)
+        self.log_dict(self.test_r2_score.compute(), on_step=False, on_epoch=True, sync_dist=True)
+        self.test_metrics.reset()
+        self.test_r2_score.reset()
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
