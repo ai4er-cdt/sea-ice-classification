@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Sea Ice Random Forest Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--sample", action=BooleanOptionalAction, help="Run a sample of the dataset")
-    parser.add_argument("--n_sample", default=100, type=int, help="Number of tiles to use in the sample")
+    parser.add_argument("--pct_sample", default=0.1, type=float, help="Percent of images to use as sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
@@ -82,8 +82,9 @@ if __name__ == '__main__':
     
     # Sample tiles according to argsparse    
     if args.sample:
-        assert args.n_sample <= len(sar_filenames)
-        sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
+        assert 0 < args.pct_sample <= 1
+        n_sample = int(len(sar_filenames) * args.pct_sample)
+        sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
