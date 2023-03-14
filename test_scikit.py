@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("--username", type=str, help="wandb username")
     parser.add_argument("--name", type=str, help="Name of wandb run")
     parser.add_argument("--model_name", type=str, help="path to the model")
-    parser.add_argument("--classification_type", default=None, type=str, help="[binary,ternary,multiclass]")
+    parser.add_argument("--classification_type", default='binary', type=str, help="Type of classification task")
     parser.add_argument("--sar_band3", default="angle", type=str, choices=["angle", "ratio"],
                         help="Whether to use incidence angle or HH/HV ratio in third band")
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR output folder name")

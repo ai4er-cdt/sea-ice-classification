@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Sea Ice Random Forest Train")
     parser.add_argument("--name", default="default", type=str, help="Name of wandb run")
     parser.add_argument("--sample", action=BooleanOptionalAction, help="Run a sample of the dataset")
-    parser.add_argument("--n_sample", default=100, type=int, help="Number of tiles to use in the sample")
+    parser.add_argument("--pct_sample", default=0.1, type=float, help="Percent of images to use as sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
                         choices=["binary", "ternary", "multiclass"], help="Type of classification task")
@@ -82,8 +82,9 @@ if __name__ == '__main__':
     
     # Sample tiles according to argsparse    
     if args.sample:
-        assert args.n_sample <= len(sar_filenames)
-        sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
+        assert 0 < args.pct_sample <= 1
+        n_sample = int(len(sar_filenames) * args.pct_sample)
+        sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
@@ -184,16 +185,33 @@ if __name__ == '__main__':
     labels = list(class_categories.keys())
     
     # Sklearn metrics
-    from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, classification_report, ConfusionMatrixDisplay
+    from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, r2_score, mean_absolute_error, mean_squared_error, classification_report, ConfusionMatrixDisplay
     
-    accuracy = accuracy_score(Y_train_data, y_pred)
-    f1 = f1_score(Y_train_data, y_pred)
     jaccard = jaccard_score(Y_train_data, y_pred)
-    l_loss = log_loss(Y_train_data, y_pred)
-    precision = precision_score(Y_train_data, y_pred)
-    recall = recall_score(Y_train_data, y_pred)
+    accuracy = accuracy_score(Y_train_data, y_pred)
+    micro_precision = precision_score(Y_train_data, y_pred, average="micro")
+    macro_precision = precision_score(Y_train_data, y_pred, average="macro")
+    weighted_precision = precision_score(Y_train_data, y_pred, average="weighted")
+    micro_recall = recall_score(Y_train_data, y_pred, average="micro")
+    macro_recall = recall_score(Y_train_data, y_pred, average="macro")
+    weighted_recall = recall_score(Y_train_data, y_pred, average="weighted")
+    micro_f1 = f1_score(Y_train_data, y_pred, average="micro")
+    macro_f1 = f1_score(Y_train_data, y_pred, average="macro")
+    weighted_f1 = f1_score(Y_train_data, y_pred, average="weighted")
+    mse = mean_squared_error(Y_train_data, y_pred)
+    rmse = mean_squared_error(Y_train_data, y_pred, squared=False)
+    mae = mean_absolute_error(Y_train_data, y_pred)
+    l_loss = log_loss(Y_train_data, y_pred)    
     roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1])
-    roc = roc_curve(Y_train_data, y_prob[:, 1])
+    # roc = roc_curve(Y_train_data, y_prob[:, 1])
+    r2 = r2_score(Y_train_data, y_pred)
+    
+    metrics_dict = {'jaccard': jaccard, 'accuracy': accuracy, 'micro_precision': micro_precision, 'macro_precision': macro_precision,
+                    'weighted_precision': weighted_precision, 'micro_recall': micro_recall, 'macro_recall': macro_recall,
+                    'weighted_recall': weighted_recall, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1,
+                    'mse': mse, 'rmse': rmse, 'mae': mae, 'l_loss': l_loss, 'roc_auc': roc_auc,
+                    # 'roc': roc,
+                    'r2': r2}
     
     print(classification_report(Y_train_data, y_pred))
     print(confusion_matrix(Y_train_data, y_pred))
@@ -214,15 +232,8 @@ if __name__ == '__main__':
     wandb.sklearn.plot_calibration_curve(model, X_train_data, Y_train_data, args.model)
     wandb.sklearn.plot_summary_metrics(model, X_train_data, Y_train_data, X_train_data, Y_train_data)
     # wandb.sklearn.plot_learning_curve(model, X, y)
-    # wandb.log(args)
-    wandb.log({"accuracy": accuracy,
-               'f1': f1,
-               'jaccard': jaccard,
-               'log_loss': l_loss,
-               'precision': precision,
-               'recall': recall,
-               'roc_auc': roc_auc,
-               'roc': roc})
+    wandb.log(vars(args))
+    wandb.log(metrics_dict)
     
     if args.grid_search:
         wandb.log(model.best_params_)
