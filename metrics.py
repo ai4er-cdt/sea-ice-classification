@@ -43,9 +43,21 @@ def compute_metrics(array: DataArray) -> dict:
 
 def compute_overall_metrics(sar_folder: str, chart_sar_pairs: dict) -> dict:
     
+    """
+    Computes the mean and the standard deviation of each band for all the SAR images.
+    In addition, computes mean and std of the ratio between HH and HV  for all the SAR images.
+
+        Parameters:
+            sar_folder (str): Path to the folder where the SAR images are located
+            chart_sar_pairs (dict): Dictionary of tuples containing the names of SAR and Ice chart images
+            
+        Returns:
+            info (dict): Array metrics for future use
+    """
+    
     hh_total_sum = hv_total_sum = angle_total_sum = hh_hv_total_sum = total_pixels = 0
 
-    for i, (_, sar_name, _) in enumerate(chart_sar_pairs):
+    for _, (_, sar_name, _) in enumerate(chart_sar_pairs):
 
         sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.tif")), default_name="SAR Image")
         
@@ -66,7 +78,7 @@ def compute_overall_metrics(sar_folder: str, chart_sar_pairs: dict) -> dict:
 
     hh_std_sum = hv_std_sum = angle_std_sum = hh_hv_std_sum = 0
     
-    for i, (_, sar_name, _) in enumerate(chart_sar_pairs):
+    for _, (_, sar_name, _) in enumerate(chart_sar_pairs):
         sar_image = load_raster(str(Path(f"{sar_folder}/{sar_name}.tif")), default_name="SAR Image")
         
         hh_hv = sar_image[0] / (sar_image[1] + 0.0001)    

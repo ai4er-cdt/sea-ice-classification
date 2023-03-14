@@ -37,13 +37,22 @@ new_classes = {None: None,  # use original categories
                 "multiclass": [0, 1, 13, 14, 24, 46, 47, 68, 78, 79, 81, 90, 91, 92]}
 
 # Scikit learn hyperparameters for tuning classification algorithms
-
+# Model : {parameter: [possible values]}
 model_parameters = {'RandomForest': {'bootstrap': [True, False],
                                      'max_depth': [25, 50, 75, 100, None],
                                     #  'min_samples_leaf': [100, 2000, 10000],
                                     #  'min_samples_split': [2000, 5000, 10000],
                                      'n_estimators': [200, 1000, 2000]},
-                    'DecisionTree': {},
+                    'DecisionTree': {'splitter': ['best', 'random'],
+                                     'min_samples_leaf': [100, 2000, 10000],
+                                     'min_samples_split': [2000, 5000, 10000],
+                                     'max_depth': [25, 50, 75, 100, None]},
                     'KNeighbors': {},
                     'SGD': {},
-                    'MLP': {}}
+                    'MLP': {},
+                    'SVC': {'kernel': ['linear', 'poly'],
+                            'degree': [3, 10, 50],
+                            'C': [1.0, 5.0, 10.0]},
+                    'LogisticRegression': {'penalty': ['l1', 'l2', 'elasticnet'],
+                                           'C': [1.0, 5.0, 10.0],
+                                           'l1_ratio': [0.0, 0.5, 1.0]}}

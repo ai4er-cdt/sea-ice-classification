@@ -10,8 +10,6 @@ import multiprocessing as mp
 from pathlib import Path
 from timeit import default_timer
 from joblib import dump
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from constants import new_classes, model_parameters, chart_sar_pairs
 from util_scikit import load_chart, load_sar, crop_image
 from argparse import ArgumentParser, BooleanOptionalAction
@@ -31,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument("--sar_folder", default='sar', type=str, help="SAR input folder name")
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--model", default='RandomForest', type=str, 
-                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP', 'SVC'], help="Classification model to use")
+                        choices=['RandomForest', 'DecisionTree', 'KNeighbors', 'SGD', 'MLP', 'SVC', 'LogisticRegression'], help="Classification model to use")
     parser.add_argument("--grid_search", action=BooleanOptionalAction, help='Wether to perform grid search cross-validation')
     parser.add_argument("--cv_fold", default=5, type=int, help="Number of folds for cross-validation")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
@@ -40,6 +38,7 @@ if __name__ == '__main__':
                         help="Whether to flip an ice chart vertically to match the SAR coordinates")
     parser.add_argument("--impute", action=BooleanOptionalAction,
                         help="Whether to impute missing values in SAR and Ice charts")
+    parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
     args = parser.parse_args()
     
     t_start = default_timer()
@@ -48,8 +47,9 @@ if __name__ == '__main__':
     n_classes = len(class_categories)
     sar_band3 = args.sar_band3
     is_binary = True if args.classification_type == 'binary' else False
-    seed = np.random.seed(0)
+    seed = np.random.seed(args.seed)
     
+    # Function wrappers for parallel execution    
     def load_sar_wrapper(file_path: str):
         return load_sar(file_path, sar_band3)
         
@@ -59,8 +59,7 @@ if __name__ == '__main__':
     def load_chart_wrapper_vertical(file_path: str):
         return load_chart(file_path, class_categories, flip_vertically=args.flip_vertically)
     
-    # standard input dirs
-    
+    # standard input dirs    
     if args.data_type == 'tile':
         input_folder = Path(open("tile.config").read().strip())
         sar_folder = f"{input_folder}/{args.sar_folder}"
@@ -81,12 +80,14 @@ if __name__ == '__main__':
         sar_filenames = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs]
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
+    # Sample tiles according to argsparse    
     if args.sample:
         assert args.n_sample <= len(sar_filenames)
         sample_n = np.random.randint(len(sar_filenames), size=(args.n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
+    # Standard or parallel loading of tiles        
     if args.load_parallel:
         print('Loading tiles in parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
@@ -100,10 +101,11 @@ if __name__ == '__main__':
         
         mp_pool.close()
     else:
-        print('Loading tiles')
+        print(f'Loading {len(sar_filenames)} tiles')
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
+    # Crop tiles to the smallest size from the original SAR/Ice charts        
     if args.data_type == 'original':
         height_min = 100000000
         width_min = 100000000
@@ -121,14 +123,22 @@ if __name__ == '__main__':
         train_x_lst = [crop_image(sar, height_min, width_min) for sar in train_x_lst]
         train_y_lst = [crop_image(chart, height_min, width_min) for chart in train_y_lst]
 
+
+    # Stack list of images as ndarray
     train_x = np.stack(train_x_lst)
     train_y = np.stack(train_y_lst)
 
     # Reorder dimensions
     X_train_data = np.moveaxis(train_x, 1, -1).reshape(-1, 3)
     Y_train_data = np.moveaxis(train_y, 1, -1).reshape(-1, 1)
+    
+    # Intel optimizer for Intel machines
+    from sklearnex import patch_sklearn
+    patch_sklearn()
 
+    # Impute missing values if required
     if args.impute:
+        print(f'Imputing missing values')
         from sklearn.impute import KNNImputer
         x_imputer = KNNImputer(n_neighbors=8)
         y_imputer = KNNImputer(n_neighbors=8)
@@ -139,6 +149,7 @@ if __name__ == '__main__':
     # Models
     print(f'Training {args.model}')
     if args.model == 'RandomForest':
+        from sklearn.ensemble import RandomForestClassifier
         model = RandomForestClassifier(n_jobs=args.n_cores, random_state=seed)
     elif args.model == 'DecisionTree':
         from sklearn.tree import  DecisionTreeClassifier
@@ -155,6 +166,9 @@ if __name__ == '__main__':
     elif args.model == 'SVC':
         from sklearn.svm import SVC
         model = SVC(probability=True, random_state=seed)
+    elif args.model == 'LogisticRegression':
+        from sklearn.linear_model import LogisticRegression
+        model = LogisticRegression(solver='saga', multi_class='multinomial', n_jobs=args.n_cores, random_state=seed)
     
     # Grid search tuning
     if args.grid_search:
@@ -169,10 +183,20 @@ if __name__ == '__main__':
 
     labels = list(class_categories.keys())
     
-    print(f"Accuracy: {accuracy_score(Y_train_data, y_pred)*100}")
-
+    # Sklearn metrics
+    from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, classification_report, ConfusionMatrixDisplay
+    
+    accuracy = accuracy_score(Y_train_data, y_pred)
+    f1 = f1_score(Y_train_data, y_pred)
+    jaccard = jaccard_score(Y_train_data, y_pred)
+    l_loss = log_loss(Y_train_data, y_pred)
+    precision = precision_score(Y_train_data, y_pred)
+    recall = recall_score(Y_train_data, y_pred)
+    roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1])
+    roc = roc_curve(Y_train_data, y_prob[:, 1])
+    
     print(classification_report(Y_train_data, y_pred))
-    print(confusion_matrix(Y_train_data,y_pred))
+    print(confusion_matrix(Y_train_data, y_pred))
 
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
@@ -184,6 +208,24 @@ if __name__ == '__main__':
         wandb.run.name = args.name
     wandb.sklearn.plot_classifier(model, X_train_data, X_train_data, Y_train_data, Y_train_data,
                                   y_pred, y_prob, labels, is_binary=is_binary, model_name=args.model)
+    wandb.sklearn.plot_roc(Y_train_data, y_prob, labels)
+    wandb.sklearn.plot_class_proportions(Y_train_data, Y_train_data, labels)
+    wandb.sklearn.plot_precision_recall(Y_train_data, y_prob, labels)
+    wandb.sklearn.plot_calibration_curve(model, X_train_data, Y_train_data, args.model)
+    wandb.sklearn.plot_summary_metrics(model, X_train_data, Y_train_data, X_train_data, Y_train_data)
+    # wandb.sklearn.plot_learning_curve(model, X, y)
+    # wandb.log(args)
+    wandb.log({"accuracy": accuracy,
+               'f1': f1,
+               'jaccard': jaccard,
+               'log_loss': l_loss,
+               'precision': precision,
+               'recall': recall,
+               'roc_auc': roc_auc,
+               'roc': roc})
+    
+    if args.grid_search:
+        wandb.log(model.best_params_)
     
     Path.mkdir(Path(f"scikit_models"), parents=True, exist_ok=True)
     dump(model, Path(f'scikit_models/{wandb.run.name}.joblib'))
