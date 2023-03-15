@@ -77,3 +77,7 @@ if __name__ == "__main__":
     df_high = df[df["high"] > 0]
     df_high = df_high.sort_values(by="high", axis=0, ascending=False)
     df_high.to_csv(f"{args.tile_info_filename[:-4]}_high.csv")
+
+    # generate summary
+    df_summary = df.drop(["region", "basename", "file_n", "size", "col", "row", "sar_filename", "chart_filename"], axis=1).sum(axis=0)
+    df_summary.to_csv(f"{args.tile_info_filename[:-4]}_summary.csv")
