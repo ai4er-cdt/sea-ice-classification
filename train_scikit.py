@@ -49,7 +49,7 @@ if __name__ == '__main__':
     is_binary = True if args.classification_type == 'binary' else False
     seed = np.random.seed(args.seed)
     
-    # Function wrappers for parallel execution    
+    # Function wrappers for parallel execution
     def load_sar_wrapper(file_path: str):
         return load_sar(file_path, sar_band3)
         
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     def load_chart_wrapper_vertical(file_path: str):
         return load_chart(file_path, class_categories, flip_vertically=args.flip_vertically)
     
-    # standard input dirs    
+    # standard input dirs
     if args.data_type == 'tile':
         input_folder = Path(open("tile.config").read().strip())
         sar_folder = f"{input_folder}/{args.sar_folder}"
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         sar_filenames = [os.path.join(sar_folder, f'{sar}.{sar_ext}') for (_, sar, _) in chart_sar_pairs]
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
-    # Sample tiles according to argsparse    
+    # Sample tiles according to argsparse
     if args.sample:
         assert 0 < args.pct_sample <= 1
         n_sample = int(len(sar_filenames) * args.pct_sample)
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
         
-    # Standard or parallel loading of tiles        
+    # Standard or parallel loading of tiles
     if args.load_parallel:
         print('Loading tiles in parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
-    # Crop tiles to the smallest size from the original SAR/Ice charts        
+    # Crop tiles to the smallest size from the original SAR/Ice charts
     if args.data_type == 'original':
         height_min = 100000000
         width_min = 100000000
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     
     # Grid search tuning
     if args.grid_search:
-        print(f'Training {args.model} with GridSearch')
+        print(f'With GridSearch')
         from sklearn.model_selection import GridSearchCV
         model = GridSearchCV(model, param_grid=model_parameters[args.model], cv=args.cv_fold, n_jobs=args.n_cores)
         
@@ -187,22 +187,22 @@ if __name__ == '__main__':
     # Sklearn metrics
     from sklearn.metrics import accuracy_score, f1_score, jaccard_score, log_loss, precision_score, recall_score, confusion_matrix, roc_auc_score, roc_curve, r2_score, mean_absolute_error, mean_squared_error, classification_report, ConfusionMatrixDisplay
     
-    jaccard = jaccard_score(Y_train_data, y_pred)
+    jaccard = jaccard_score(Y_train_data, y_pred, average='macro', labels=labels)
     accuracy = accuracy_score(Y_train_data, y_pred)
-    micro_precision = precision_score(Y_train_data, y_pred, average="micro")
-    macro_precision = precision_score(Y_train_data, y_pred, average="macro")
-    weighted_precision = precision_score(Y_train_data, y_pred, average="weighted")
-    micro_recall = recall_score(Y_train_data, y_pred, average="micro")
-    macro_recall = recall_score(Y_train_data, y_pred, average="macro")
-    weighted_recall = recall_score(Y_train_data, y_pred, average="weighted")
-    micro_f1 = f1_score(Y_train_data, y_pred, average="micro")
-    macro_f1 = f1_score(Y_train_data, y_pred, average="macro")
-    weighted_f1 = f1_score(Y_train_data, y_pred, average="weighted")
+    micro_precision = precision_score(Y_train_data, y_pred, average="micro", labels=labels)
+    macro_precision = precision_score(Y_train_data, y_pred, average="macro", labels=labels)
+    weighted_precision = precision_score(Y_train_data, y_pred, average="weighted", labels=labels)
+    micro_recall = recall_score(Y_train_data, y_pred, average="micro", labels=labels)
+    macro_recall = recall_score(Y_train_data, y_pred, average="macro", labels=labels)
+    weighted_recall = recall_score(Y_train_data, y_pred, average="weighted", labels=labels)
+    micro_f1 = f1_score(Y_train_data, y_pred, average="micro", labels=labels)
+    macro_f1 = f1_score(Y_train_data, y_pred, average="macro", labels=labels)
+    weighted_f1 = f1_score(Y_train_data, y_pred, average="weighted", labels=labels)
     mse = mean_squared_error(Y_train_data, y_pred)
     rmse = mean_squared_error(Y_train_data, y_pred, squared=False)
     mae = mean_absolute_error(Y_train_data, y_pred)
-    l_loss = log_loss(Y_train_data, y_pred)    
-    roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1])
+    l_loss = log_loss(Y_train_data, y_pred, labels=labels)    
+    roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1], labels=labels)
     # roc = roc_curve(Y_train_data, y_prob[:, 1])
     r2 = r2_score(Y_train_data, y_pred)
     
