@@ -10,6 +10,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     df = pd.read_csv(args.tile_info_filename)
+    df["sar_filename"] = f"SAR_{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff"
+    df["chart_filename"] = f"CHART_{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff"
     numeric_columns = [col for col in df.columns if col[0].isnumeric()]
     df["low"] = 0
     df["mid"] = 0
@@ -49,3 +51,18 @@ if __name__ == "__main__":
     df_low_high = df[df["low_high"]]
     df_low_high = df_low_high.sort_values(by="low_high_min", axis=0, ascending=False)
     df_low_high.to_csv(f"{args.tile_info_filename[:-4]}_low_high.csv")
+
+    # generate output with low classes
+    df_low = df[df["low"] > 0]
+    df_low = df_low.sort_values(by="low", axis=0, ascending=False)
+    df_low.to_csv(f"{args.tile_info_filename[:-4]}_low.csv")
+
+    # generate output with mid/high classes
+    df_mid = df[df["mid"] > 0]
+    df_mid = df_mid.sort_values(by="mid", axis=0, ascending=False)
+    df_mid.to_csv(f"{args.tile_info_filename[:-4]}_mid.csv")
+
+    # generate output with low/high classes
+    df_high = df[df["high"] > 0]
+    df_high = df_high.sort_values(by="high", axis=0, ascending=False)
+    df_high.to_csv(f"{args.tile_info_filename[:-4]}_high.csv")
