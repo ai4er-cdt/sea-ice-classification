@@ -72,5 +72,5 @@ if __name__ == "__main__":
     df_high.to_csv(f"{args.tile_info_filename[:-4]}_high.csv")
 
     # generate summary
-    df_summary = df.drop(["region", "basename", "file_n", "size", "col", "row", "sar_filename", "chart_filename"], axis=1).sum(axis=0)
+    df_summary = df.drop(["region", "basename", "file_n", "size", "col", "row", "filename"], axis=1).sum(axis=0)
     df_summary.to_csv(f"{args.tile_info_filename[:-4]}_summary.csv")
