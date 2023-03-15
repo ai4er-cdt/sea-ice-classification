@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # test
     trainer = pl.Trainer.from_argparse_args(args)
     trainer.logger = wandb_logger
-    trainer.callbacks.append(Visualise(test_vis_dataloader, len(test_vis_files)))
+    trainer.callbacks.append(Visualise(test_vis_dataloader, len(test_vis_files), args.classification_type))
 
     # train model
     print(f"Testing {len(test_dataset)} examples / {len(test_dataloader)} batches (batch size {args.batch_size}).")

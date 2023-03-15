@@ -162,7 +162,7 @@ if __name__ == '__main__':
     trainer = pl.Trainer.from_argparse_args(args)
     trainer.logger = wandb_logger
     trainer.callbacks.append(ModelCheckpoint(monitor="val_loss"))
-    trainer.callbacks.append(Visualise(val_vis_dataloader, len(val_vis_files)))
+    trainer.callbacks.append(Visualise(val_vis_dataloader, len(val_vis_files), args.classification_type))
 
     # train model
     print(f"Training {len(train_dataset)} examples / {len(train_dataloader)} batches (batch size {args.batch_size}).")

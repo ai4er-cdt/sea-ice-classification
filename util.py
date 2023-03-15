@@ -123,12 +123,20 @@ class Visualise(Callback):
     """
     Callback to visualise input/output samples and predictions.
     """
-    def __init__(self, dataloader, n_files):
+    def __init__(self, dataloader, n_files, classification_type):
         """
         Construct callback object.
         """
         self.dataloader = dataloader
         self.n_files = n_files
+        if classification_type == "binary":
+            self.vmax = 1  # upper bound of color bar for prediction and truth
+        elif classification_type == "ternary":
+            self.vmax = 2  # upper bound of color bar for prediction and truth
+        elif classification_type == "multiclass":
+            self.vmax = 100  # upper bound of color bar for prediction and truth
+        else:
+            raise ValueError(f"Invalid classification_type: {classification_type}")
 
     def on_validation_epoch_start(self, trainer, pl_module):
         """
@@ -149,9 +157,9 @@ class Visualise(Callback):
                 ax[i, 1].set_title("SAR Band 2")
                 ax[i, 2].imshow(a[:, :, 2])
                 ax[i, 2].set_title("SAR Band 3")
-                ax[i, 3].imshow(y_hat_pred[i].detach().cpu().numpy())
+                ax[i, 3].imshow(y_hat_pred[i].detach().cpu().numpy(), vmin=0, vmax=self.vmax)
                 ax[i, 3].set_title("Prediction")
-                ax[i, 4].imshow(y[i].detach().cpu().numpy())
+                ax[i, 4].imshow(y[i].detach().cpu().numpy(), vmin=0, vmax=self.vmax)
                 ax[i, 4].set_title("Truth")
             plt.tight_layout()
             wandb_logger = trainer.logger.experiment
@@ -160,4 +168,25 @@ class Visualise(Callback):
             break  # only visualise from first batch
 
     def on_test_epoch_start(self, trainer, pl_module):
-        return self.on_validation_epoch_start(trainer, pl_module)
+        for batch in self.dataloader:
+            x, y = batch["sar"].to(pl_module.device), batch["chart"].squeeze().long().to(pl_module.device)
+            y_hat = pl_module(x)
+            y_hat_pred = y_hat.argmax(dim=1)
+            fig, ax = plt.subplots(self.n_files, 5, figsize=(15, self.n_files * 3))
+            for i in range(self.n_files):
+                a = x[i].detach().cpu().numpy().transpose(1, 2, 0)
+                ax[i, 0].imshow(a[:, :, 0])
+                ax[i, 0].set_title("SAR Band 1")
+                ax[i, 1].imshow(a[:, :, 1])
+                ax[i, 1].set_title("SAR Band 2")
+                ax[i, 2].imshow(a[:, :, 2])
+                ax[i, 2].set_title("SAR Band 3")
+                ax[i, 3].imshow(y_hat_pred[i].detach().cpu().numpy(), vmin=0, vmax=self.vmax)
+                ax[i, 3].set_title("Prediction")
+                ax[i, 4].imshow(y[i].detach().cpu().numpy(), vmin=0, vmax=self.vmax)
+                ax[i, 4].set_title("Truth")
+            plt.tight_layout()
+            wandb_logger = trainer.logger.experiment
+            wandb_logger.log({"test_image": fig})
+            plt.close(fig)
+            break  # only visualise from first batch
