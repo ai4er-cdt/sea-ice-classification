@@ -49,9 +49,11 @@ if __name__ == "__main__":
 
     # standard input dirs
     val_tile_folder = f"{open('tile.config').read().strip()}"
-    tile_folder = f"{val_tile_folder}/test"
-    sar_folder = f"{tile_folder}/sar"
-    chart_folder = f"{tile_folder}/chart"
+    val_sar_folder = f"{val_tile_folder}/sar"
+    val_chart_folder = f"{val_tile_folder}/chart"
+    test_tile_folder = f"{val_tile_folder}/test"
+    test_sar_folder = f"{test_tile_folder}/sar"
+    test_chart_folder = f"{test_tile_folder}/chart"
 
     # get file lists
     if args.test_mode == "Single":  # load single test file
@@ -64,7 +66,7 @@ if __name__ == "__main__":
                 f"{row['region']}_{row['basename']}_{row['file_n']:05}_[{row['col']},{row['row']}]_{row['size']}x{row['size']}.tiff")
         test_files = files
     else:  # load full sets of test files from pre-determined lists
-        with open(Path(f"{tile_folder}/test_files.txt"), "r") as f:
+        with open(Path(f"{test_tile_folder}/test_files.txt"), "r") as f:
             test_files = f.read().splitlines()
     print(f"Length of test file list {len(test_files)}.")
 
@@ -86,13 +88,13 @@ if __name__ == "__main__":
 
     # get test visualisation file lists
     test_dfs = {
-        "low": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
-        "mid": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
-        "high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_mid": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
-        "mid_high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
-        "three": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
+        "low": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
+        "mid": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
+        "high": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_mid": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
+        "mid_high": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_high": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
+        "three": pd.read_csv(f"{test_tile_folder}/{args.test_tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
     }
     test_vis_files = []
     for df in test_dfs.values():
@@ -109,24 +111,24 @@ if __name__ == "__main__":
     # load test data
     test_sar_files = [f"SAR_{f}" for f in test_files]
     test_chart_files = [f"CHART_{f}" for f in test_files]
-    test_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=test_sar_files,
-                                 chart_path=chart_folder, chart_files=test_chart_files,
+    test_dataset = SeaIceDataset(sar_path=test_sar_folder, sar_files=test_sar_files,
+                                 chart_path=test_chart_folder, chart_files=test_chart_files,
                                  class_categories=class_categories)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # load val vis data
     val_vis_sar_files = [f"SAR_{f}" for f in val_vis_files]
     val_vis_chart_files = [f"CHART_{f}" for f in val_vis_files]
-    val_vis_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=val_vis_sar_files,
-                                    chart_path=chart_folder, chart_files=val_vis_chart_files,
+    val_vis_dataset = SeaIceDataset(sar_path=val_sar_folder, sar_files=val_vis_sar_files,
+                                    chart_path=val_chart_folder, chart_files=val_vis_chart_files,
                                     class_categories=class_categories)
     val_vis_dataloader = DataLoader(val_vis_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # load test vis data
     test_vis_sar_files = [f"SAR_{f}" for f in test_vis_files]
     test_vis_chart_files = [f"CHART_{f}" for f in test_vis_files]
-    test_vis_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=test_vis_sar_files,
-                                     chart_path=chart_folder, chart_files=test_vis_chart_files,
+    test_vis_dataset = SeaIceDataset(sar_path=test_sar_folder, sar_files=test_vis_sar_files,
+                                     chart_path=test_chart_folder, chart_files=test_vis_chart_files,
                                      class_categories=class_categories)
     test_vis_dataloader = DataLoader(test_vis_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
