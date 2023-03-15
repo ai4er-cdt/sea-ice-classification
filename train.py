@@ -51,6 +51,9 @@ if __name__ == '__main__':
     parser.add_argument("--num_sanity_val_steps", default=2, type=int, help="Number of batches to sanity check before training")
     parser.add_argument("--limit_train_batches", default=1.0, type=float, help="Proportion of training dataset to use")
     parser.add_argument("--limit_val_batches", default=1.0, type=float, help="Proportion of validation dataset to use")
+    parser.add_argument("--tile_info_base", default="tile_info_13032023T164009",
+                        type=str, help="Tile info csv to load images for visualisation")
+    parser.add_argument("--n_to_visualise", default=3, type=int, help="How many tiles per category to visualise")
     args = parser.parse_args()
 
     # standard input dirs
@@ -77,6 +80,21 @@ if __name__ == '__main__':
     print(f"Length of train file list {len(train_files)}.")
     print(f"Length of val file list {len(val_files)}.")
 
+    # get visualisation file lists
+    dfs = {
+        "low": pd.read_csv(f"{args.tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
+        "mid": pd.read_csv(f"{args.tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
+        "high": pd.read_csv(f"{args.tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_mid": pd.read_csv(f"{args.tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
+        "mid_high": pd.read_csv(f"{args.tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_high": pd.read_csv(f"{args.tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
+        "three": pd.read_csv(f"{args.tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
+    }
+    val_vis_files = []
+    for df in dfs:
+        val_vis_files.append(df["filename"].to_list())
+    print(f"Length of validation vis file list {len(val_vis_files)}.")
+
     # init
     pl.seed_everything(args.seed)
     class_categories = new_classes[args.classification_type]
@@ -97,6 +115,14 @@ if __name__ == '__main__':
                                 chart_path=chart_folder, chart_files=val_chart_files,
                                 class_categories=class_categories, sar_band3=args.sar_band3)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
+
+    # load validation vis data
+    val_vis_sar_files = [f"SAR_{f}" for f in val_vis_files]
+    val_vis_chart_files = [f"CHART_{f}" for f in val_vis_files]
+    val_vis_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=val_vis_sar_files,
+                                    chart_path=chart_folder, chart_files=val_vis_chart_files,
+                                    class_categories=class_categories, sar_band3=args.sar_band3)
+    val_vis_dataloader = DataLoader(val_vis_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # configure model
     if args.model == "unet":
@@ -135,7 +161,7 @@ if __name__ == '__main__':
     trainer = pl.Trainer.from_argparse_args(args)
     trainer.logger = wandb_logger
     trainer.callbacks.append(ModelCheckpoint(monitor="val_loss"))
-    trainer.callbacks.append(Visualise(val_dataloader))
+    trainer.callbacks.append(Visualise(val_vis_dataloader, len(val_vis_files)))
 
     # train model
     print(f"Training {len(train_dataset)} examples / {len(train_dataloader)} batches (batch size {args.batch_size}).")
