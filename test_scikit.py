@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="Sea Ice Segmentation Test")
    
-    parser.add_argument("--username", type=str, help="wandb username")
-    parser.add_argument("--name", type=str, help="Name of wandb run")
+    # parser.add_argument("--username", type=str, help="wandb username")
+    # parser.add_argument("--name", type=str, help="Name of wandb run")
     parser.add_argument("--model_name", type=str, help="path to the model")
     parser.add_argument("--pct_sample", default=0.1, type=float, help="Percent of images to use as sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     patch_sklearn()
 
     # wandb logging
-    wandb.init(id=args.name, project="sea-ice-classification", resume="must")
-    api = wandb.Api()
-    run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
+    # wandb.init(id=args.name, project="sea-ice-classification", resume="must")
+    # api = wandb.Api()
+    # run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
     
     model = load(Path(f'scikit_models/{args.model_name}.joblib'))
     
@@ -168,13 +168,13 @@ if __name__ == "__main__":
     # test_roc = roc_curve(Y_test_data, y_prob[:, 1])
     test_r2 = r2_score(Y_test_data, y_pred)
     
-    metrics_dict = {'test_roc_auc': test_roc_auc, 'test_jaccard': test_jaccard, 'test_accuracy': test_accuracy,
+    metrics_dict = {'test_jaccard': test_jaccard, 'test_accuracy': test_accuracy,
                     'test_micro_precision': test_micro_precision, 'test_macro_precision': test_macro_precision,
                     'test_weighted_precision': test_weighted_precision, 'test_micro_recall': test_micro_recall,
                     'test_macro_recall': test_macro_recall, 'test_weighted_recall': test_weighted_recall,
                     'test_micro_f1': test_micro_f1, 'test_macro_f1': test_macro_f1, 'test_weighted_f1': test_weighted_f1,
-                    'test_mse': test_mse, 'test_rmse': test_rmse, 'test_mae': test_mae, 'test_l_loss': test_l_loss,
-                    # 'test_roc': test_roc,
+                    'test_mse': test_mse, 'test_rmse': test_rmse, 'test_mae': test_mae, 
+                    # 'test_log_loss': test_l_loss, 'test_roc_auc': test_roc_auc, 'test_roc': test_roc,
                     'test_r2': test_r2}
     
     print(classification_report(Y_test_data, y_pred))
@@ -182,3 +182,8 @@ if __name__ == "__main__":
 
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
+
+    import json
+    
+    with open(Path(f'test_{args.model_name}.json'), 'w') as f:
+        json.dump(metrics_dict, f)
