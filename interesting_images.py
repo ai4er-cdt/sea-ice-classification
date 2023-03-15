@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser.add_argument("--tile_info_filename", type=str, help="Filename of tile_info csv to process")
     args = parser.parse_args()
 
-    df = pd.read_csv(args.tile_info_filename, index_col=0)
+    df = pd.read_csv(args.tile_info_filename)
     numeric_columns = [col for col in df.columns if col[0].isnumeric()]
     df["low"] = 0
     df["mid"] = 0
