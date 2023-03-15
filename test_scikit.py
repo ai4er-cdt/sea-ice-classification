@@ -99,7 +99,6 @@ if __name__ == "__main__":
         
         mp_pool.close()
     else:
-        print(f'Loading {len(sar_filenames)} tiles')
         test_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         test_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
@@ -181,7 +180,7 @@ if __name__ == "__main__":
     
     print(classification_report(Y_test_data, y_pred))
     print(confusion_matrix(Y_test_data, y_pred))
-
+    print('Model metrics breakdown:\n' + metrics_dict)
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
 
