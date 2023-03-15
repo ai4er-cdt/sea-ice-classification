@@ -92,7 +92,8 @@ if __name__ == '__main__':
     }
     val_vis_files = []
     for df in dfs:
-        val_vis_files.append(df["filename"].to_list())
+        if len(df) > 0:
+            val_vis_files.append(df["filename"].to_list())
     print(f"Length of validation vis file list {len(val_vis_files)}.")
 
     # init
