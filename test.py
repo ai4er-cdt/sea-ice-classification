@@ -76,7 +76,7 @@ if __name__ == "__main__":
         "three": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
     }
     test_vis_files = []
-    for df in dfs:
+    for df in dfs.values():
         if len(df) > 0:
             test_vis_files.append(df["filename"].to_list())
     print(f"Length of test vis file list {len(test_vis_files)}.")
