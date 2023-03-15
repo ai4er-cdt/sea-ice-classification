@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # parser.add_argument("--username", type=str, help="wandb username")
     # parser.add_argument("--name", type=str, help="Name of wandb run")
     parser.add_argument("--model_name", type=str, help="path to the model")
+    parser.add_argument("--sample", action=BooleanOptionalAction, help="Run a sample of the dataset")
     parser.add_argument("--pct_sample", default=0.1, type=float, help="Percent of images to use as sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
@@ -82,10 +83,11 @@ if __name__ == "__main__":
         sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
-
+    
+    print(f'Loading {len(sar_filenames)} tiles...')
     # Standard or parallel loading of tiles
     if args.load_parallel:
-        print('Loading tiles in parallel')
+        print('..In parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         

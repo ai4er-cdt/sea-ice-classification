@@ -89,10 +89,11 @@ if __name__ == '__main__':
         sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
-        
+    
+    print(f'Loading {len(sar_filenames)} tiles...')
     # Standard or parallel loading of tiles
     if args.load_parallel:
-        print('Loading tiles in parallel')
+        print('..In parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         
@@ -104,7 +105,6 @@ if __name__ == '__main__':
         
         mp_pool.close()
     else:
-        print(f'Loading {len(sar_filenames)} tiles')
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
