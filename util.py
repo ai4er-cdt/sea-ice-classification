@@ -123,31 +123,25 @@ class Visualise(Callback):
     """
     Callback to visualise input/output samples and predictions.
     """
-
-    def __init__(self, val_dataloader, n_to_show=5):
+    def __init__(self, dataloader, n_files):
         """
         Construct callback object.
-        :param val_dataloader: Validation dataloader to use when visualising outputs
-        :param n_to_show: How many images to show
         """
-        self.val_dataloader = val_dataloader
-        self.n_to_show = n_to_show
+        self.dataloader = dataloader
+        self.n_files = n_files
 
     def on_validation_epoch_start(self, trainer, pl_module):
         """
-        Callback to run on valiation epoch start.
-        :param trainer: PyTorch Lightining Trainer class instance
+        Callback to run on validation epoch start.
+        :param trainer: PyTorch Lightning Trainer class instance
         :param pl_module: PyTorch Lightning Module class instance
         """
-        for batch in self.val_dataloader:
+        for batch in self.dataloader:
             x, y = batch["sar"].to(pl_module.device), batch["chart"].squeeze().long().to(pl_module.device)
-            keep = y.sum(dim=[1, 2]) > 0  # keep only images with both classes
-            x, y = x[keep], y[keep]
-            x, y = x[:self.n_to_show], y[:self.n_to_show]  # keep only the first few images if there are more
             y_hat = pl_module(x)
             y_hat_pred = y_hat.argmax(dim=1)
-            fig, ax = plt.subplots(self.n_to_show, 5, figsize=(15, self.n_to_show * 3))
-            for i in range(self.n_to_show):
+            fig, ax = plt.subplots(self.n_files, 5, figsize=(15, self.n_files * 3))
+            for i in range(self.n_files):
                 a = x[i].detach().cpu().numpy().transpose(1, 2, 0)
                 ax[i, 0].imshow(a[:, :, 0])
                 ax[i, 0].set_title("SAR Band 1")
@@ -164,3 +158,6 @@ class Visualise(Callback):
             wandb_logger.log({"val_image": fig})
             plt.close(fig)
             break  # only visualise from first batch
+
+    def on_test_epoch_start(self, trainer, pl_module):
+        return self.on_validation_epoch_start(trainer, pl_module)
