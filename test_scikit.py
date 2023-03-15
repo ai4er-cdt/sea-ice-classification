@@ -4,7 +4,8 @@ Script for feeding test data into scikit-learn
 classifiers saving the model output to wandb
 """
 import os
-import wandb
+import json
+# import wandb
 import numpy as np
 import multiprocessing as mp
 from pathlib import Path
@@ -18,9 +19,10 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="Sea Ice Segmentation Test")
    
-    parser.add_argument("--username", type=str, help="wandb username")
-    parser.add_argument("--name", type=str, help="Name of wandb run")
+    # parser.add_argument("--username", type=str, help="wandb username")
+    # parser.add_argument("--name", type=str, help="Name of wandb run")
     parser.add_argument("--model_name", type=str, help="path to the model")
+    parser.add_argument("--sample", action=BooleanOptionalAction, help="Run a sample of the dataset")
     parser.add_argument("--pct_sample", default=0.1, type=float, help="Percent of images to use as sample")
     parser.add_argument("--load_parallel", action=BooleanOptionalAction, help='Whether to read tiles in parallel')
     parser.add_argument("--classification_type", default="binary", type=str,
@@ -31,6 +33,8 @@ if __name__ == "__main__":
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
     parser.add_argument("--data_type", default='tile', type=str, choices=['tile', 'original'], help='Run the classifier on the tiles or the original images')
+    parser.add_argument("--flip_vertically", action=BooleanOptionalAction,
+                        help="Whether to flip an ice chart vertically to match the SAR coordinates")
     parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
     args = parser.parse_args()
     
@@ -76,16 +80,17 @@ if __name__ == "__main__":
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
     # Sample tiles according to argsparse
-    if args.sample == 'True':
+    if args.sample:
         assert 0 < args.pct_sample <= 1
         n_sample = int(len(sar_filenames) * args.pct_sample)
         sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
-
+    
+    print(f'Loading {len(sar_filenames)} tiles...')
     # Standard or parallel loading of tiles
     if args.load_parallel:
-        print('Loading tiles in parallel')
+        print('..In parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         
@@ -97,7 +102,6 @@ if __name__ == "__main__":
         
         mp_pool.close()
     else:
-        print(f'Loading {len(sar_filenames)} tiles')
         test_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         test_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
@@ -133,12 +137,12 @@ if __name__ == "__main__":
     patch_sklearn()
 
     # wandb logging
-    wandb.init(id=args.name, project="sea-ice-classification", resume="must")
-    api = wandb.Api()
-    run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
+    # wandb.init(id=args.name, project="sea-ice-classification", resume="must")
+    # api = wandb.Api()
+    # run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
     
     model = load(Path(f'scikit_models/{args.model_name}.joblib'))
-    
+    print('Predicting values...')
     model.fit(X_test_data, Y_test_data.ravel())
     
     y_pred = model.predict(X_test_data)
@@ -168,17 +172,20 @@ if __name__ == "__main__":
     # test_roc = roc_curve(Y_test_data, y_prob[:, 1])
     test_r2 = r2_score(Y_test_data, y_pred)
     
-    metrics_dict = {'test_roc_auc': test_roc_auc, 'test_jaccard': test_jaccard, 'test_accuracy': test_accuracy,
+    metrics_dict = {'test_jaccard': test_jaccard, 'test_accuracy': test_accuracy,
                     'test_micro_precision': test_micro_precision, 'test_macro_precision': test_macro_precision,
                     'test_weighted_precision': test_weighted_precision, 'test_micro_recall': test_micro_recall,
                     'test_macro_recall': test_macro_recall, 'test_weighted_recall': test_weighted_recall,
                     'test_micro_f1': test_micro_f1, 'test_macro_f1': test_macro_f1, 'test_weighted_f1': test_weighted_f1,
-                    'test_mse': test_mse, 'test_rmse': test_rmse, 'test_mae': test_mae, 'test_l_loss': test_l_loss,
-                    # 'test_roc': test_roc,
+                    'test_mse': test_mse, 'test_rmse': test_rmse, 'test_mae': test_mae, 
+                    # 'test_log_loss': test_l_loss, 'test_roc_auc': test_roc_auc, 'test_roc': test_roc,
                     'test_r2': test_r2}
     
     print(classification_report(Y_test_data, y_pred))
     print(confusion_matrix(Y_test_data, y_pred))
-
+    print('Model metrics breakdown:\n' + metrics_dict)
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
+
+    with open(Path(f'test_{args.model_name}.json'), 'w') as f:
+        json.dump(metrics_dict, f)

@@ -89,10 +89,11 @@ if __name__ == '__main__':
         sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
         sar_filenames = [sar_filenames[i] for i in sample_n]
         chart_filenames = [chart_filenames[i] for i in sample_n]
-        
+    
+    print(f'Loading {len(sar_filenames)} tiles...')
     # Standard or parallel loading of tiles
     if args.load_parallel:
-        print('Loading tiles in parallel')
+        print('..In parallel')
         cores = mp.cpu_count() if args.n_cores == -1 else args.n_cores
         mp_pool = mp.Pool(cores)
         
@@ -104,7 +105,6 @@ if __name__ == '__main__':
         
         mp_pool.close()
     else:
-        print(f'Loading {len(sar_filenames)} tiles')
         train_x_lst = [load_sar(sar, sar_band3=sar_band3) for sar in sar_filenames]
         train_y_lst = [load_chart(chart, class_categories, flip_vertically=args.flip_vertically) for chart in chart_filenames]
         
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     metrics_dict = {'jaccard': jaccard, 'accuracy': accuracy, 'micro_precision': micro_precision, 'macro_precision': macro_precision,
                     'weighted_precision': weighted_precision, 'micro_recall': micro_recall, 'macro_recall': macro_recall,
                     'weighted_recall': weighted_recall, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1,
-                    'mse': mse, 'rmse': rmse, 'mae': mae, 'l_loss': l_loss, 'roc_auc': roc_auc,
-                    # 'roc': roc,
+                    'mse': mse, 'rmse': rmse, 'mae': mae, 
+                    # 'log_loss': l_loss, 'roc_auc': roc_auc, 'roc': roc,
                     'r2': r2}
     
     print(classification_report(Y_train_data, y_pred))
