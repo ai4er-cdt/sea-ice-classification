@@ -25,6 +25,8 @@ if __name__ == "__main__":
     df["low_mid_min"] = df[["low", "mid"]].min(axis=1)
     df["mid_high"] = np.logical_and(df["mid"] > 0, df["high"] > 0)
     df["mid_high_min"] = df[["mid", "high"]].min(axis=1)
+    df["low_high"] = np.logical_and(df["low"] > 0, df["high"] > 0)
+    df["low_high_min"] = df[["low", "high"]].min(axis=1)
     df["three"] = np.logical_and(df["low"] > 0, df["mid"] > 0, df["high"] > 0)
     df["three_min"] = df[["low", "mid", "high"]].min(axis=1)
 
@@ -42,3 +44,8 @@ if __name__ == "__main__":
     df_mid_high = df[df["mid_high"]]
     df_mid_high = df_mid_high.sort_values(by="mid_high_min", axis=0, ascending=False)
     df_mid_high.to_csv(f"{args.tile_info_filename[:-4]}_mid_high.csv")
+
+    # generate output with low/high classes
+    df_low_high = df[df["low_high"]]
+    df_low_high = df_low_high.sort_values(by="low_high_min", axis=0, ascending=False)
+    df_low_high.to_csv(f"{args.tile_info_filename[:-4]}_low_high.csv")
