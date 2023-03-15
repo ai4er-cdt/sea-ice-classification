@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from argparse import ArgumentParser
 
-
 if __name__ == "__main__":
 
     parser = ArgumentParser(description="Interesting Image Analysis")
@@ -10,8 +9,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     df = pd.read_csv(args.tile_info_filename)
-    df["sar_filename"] = f"SAR_{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff"
-    df["chart_filename"] = f"CHART_{df['region']}_{df['basename']}_{df['file_n']:05}_[{df['col']},{df['row']}]_{df['size']}x{df['size']}.tiff"
+    df["sar_filename"] = "SAR_" + df['region'].astype(str) + "_" \
+                                + df['basename'].astype(str) + "_" \
+                                + df['file_n'].astype(str).str.zfill(5) + "_[" \
+                                + df['col'].astype(str) + "," \
+                                + df['row'].astype(str) + "]_" \
+                                + df['size'].astype(str) + "x" \
+                                + df['size'].astype(str) + ".tiff"
+    df["chart_filename"] = "CHART_" + df['region'].astype(str) + "_" \
+                                + df['basename'].astype(str) + "_" \
+                                + df['file_n'].astype(str).str.zfill(5) + "_[" \
+                                + df['col'].astype(str) + "," \
+                                + df['row'].astype(str) + "]_" \
+                                + df['size'].astype(str) + "x" \
+                                + df['size'].astype(str) + ".tiff"
     numeric_columns = [col for col in df.columns if col[0].isnumeric()]
     df["low"] = 0
     df["mid"] = 0
