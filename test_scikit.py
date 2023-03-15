@@ -188,4 +188,4 @@ if __name__ == "__main__":
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
 
     with open(Path(f'test_{args.model_name}.json'), 'w') as f:
-        json.dump(metrics_dict, f)
+        json.dump(str(metrics_dict), f)
