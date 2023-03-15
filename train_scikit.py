@@ -211,8 +211,8 @@ if __name__ == '__main__':
     metrics_dict = {'jaccard': jaccard, 'accuracy': accuracy, 'micro_precision': micro_precision, 'macro_precision': macro_precision,
                     'weighted_precision': weighted_precision, 'micro_recall': micro_recall, 'macro_recall': macro_recall,
                     'weighted_recall': weighted_recall, 'micro_f1': micro_f1, 'macro_f1': macro_f1, 'weighted_f1': weighted_f1,
-                    'mse': mse, 'rmse': rmse, 'mae': mae, 'l_loss': l_loss, 'roc_auc': roc_auc,
-                    # 'roc': roc,
+                    'mse': mse, 'rmse': rmse, 'mae': mae, 
+                    # 'log_loss': l_loss, 'roc_auc': roc_auc, 'roc': roc,
                     'r2': r2}
     
     print(classification_report(Y_train_data, y_pred))
