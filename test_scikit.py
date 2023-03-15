@@ -163,8 +163,8 @@ if __name__ == "__main__":
     test_mse = mean_squared_error(Y_test_data, y_pred)
     test_rmse = mean_squared_error(Y_test_data, y_pred, squared=False)
     test_mae = mean_absolute_error(Y_test_data, y_pred)
-    test_l_loss = log_loss(Y_test_data, y_pred, labels=labels)    
-    test_roc_auc = roc_auc_score(Y_test_data, y_prob[:, 1], labels=labels)
+    # test_l_loss = log_loss(Y_test_data, y_pred, labels=labels)    
+    # test_roc_auc = roc_auc_score(Y_test_data, y_prob[:, 1], labels=labels, multi_class='ovr')
     # test_roc = roc_curve(Y_test_data, y_prob[:, 1])
     test_r2 = r2_score(Y_test_data, y_pred)
     

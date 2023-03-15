@@ -203,8 +203,8 @@ if __name__ == '__main__':
     mse = mean_squared_error(Y_train_data, y_pred)
     rmse = mean_squared_error(Y_train_data, y_pred, squared=False)
     mae = mean_absolute_error(Y_train_data, y_pred)
-    l_loss = log_loss(Y_train_data, y_pred, labels=labels)    
-    roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1], labels=labels)
+    # l_loss = log_loss(Y_train_data, y_pred, labels=labels)    
+    # roc_auc = roc_auc_score(Y_train_data, y_prob[:, 1], labels=labels, multi_class='ovr')
     # roc = roc_curve(Y_train_data, y_prob[:, 1])
     r2 = r2_score(Y_train_data, y_pred)
     
