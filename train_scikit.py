@@ -66,7 +66,9 @@ if __name__ == '__main__':
         chart_folder = f"{input_folder}/{args.chart_folder}"
         
         sar_filenames = os.listdir(sar_folder)
+        sar_filenames.sort()
         chart_filenames = os.listdir(chart_folder)
+        chart_filenames.sort()
         sar_filenames = [os.path.join(sar_folder, x) for x in sar_filenames]
         chart_filenames = [os.path.join(chart_folder, x) for x in chart_filenames]
         
