@@ -4,7 +4,8 @@ Script for feeding test data into scikit-learn
 classifiers saving the model output to wandb
 """
 import os
-import wandb
+import json
+# import wandb
 import numpy as np
 import multiprocessing as mp
 from pathlib import Path
@@ -32,6 +33,8 @@ if __name__ == "__main__":
     parser.add_argument("--chart_folder", default='chart', type=str, help="Ice Chart input folder name")
     parser.add_argument("--n_cores", default=-1, type=int, help="Number of jobs to run in parallel")
     parser.add_argument("--data_type", default='tile', type=str, choices=['tile', 'original'], help='Run the classifier on the tiles or the original images')
+    parser.add_argument("--flip_vertically", action=BooleanOptionalAction,
+                        help="Whether to flip an ice chart vertically to match the SAR coordinates")
     parser.add_argument("--seed", default=0, type=int, help="Numpy random seed")
     args = parser.parse_args()
     
@@ -184,7 +187,5 @@ if __name__ == "__main__":
     t_end = default_timer()
     print(f"Execution time: {(t_end - t_start)/60.0} minutes for {len(sar_filenames)} pair(s) of tile image(s)")
 
-    import json
-    
     with open(Path(f'test_{args.model_name}.json'), 'w') as f:
         json.dump(metrics_dict, f)
