@@ -27,7 +27,9 @@ if __name__ == "__main__":
     parser.add_argument("--accelerator", default="auto", type=str, help="PytorchLightning training accelerator")
     parser.add_argument("--devices", default=1, type=int, help="PytorchLightning number of devices to run on")
     parser.add_argument("--n_workers", default=1, type=int, help="Number of workers in dataloader")
-    parser.add_argument("--tile_info_base", default="tile_info_13032023T230145",
+    parser.add_argument("--val_tile_info_base", default="tile_info_13032023T164009",
+                        type=str, help="Tile info csv to load images for visualisation")
+    parser.add_argument("--test_tile_info_base", default="tile_info_13032023T230145",
                         type=str, help="Tile info csv to load images for visualisation")
     parser.add_argument("--n_to_visualise", default=3, type=int, help="How many tiles per category to visualise")
     args = parser.parse_args()
@@ -46,7 +48,8 @@ if __name__ == "__main__":
     vars(args).update(run.config)
 
     # standard input dirs
-    tile_folder = f"{open('tile.config').read().strip()}/test"
+    val_tile_folder = f"{open('tile.config').read().strip()}"
+    tile_folder = f"{val_tile_folder}/test"
     sar_folder = f"{tile_folder}/sar"
     chart_folder = f"{tile_folder}/chart"
 
@@ -65,18 +68,34 @@ if __name__ == "__main__":
             test_files = f.read().splitlines()
     print(f"Length of test file list {len(test_files)}.")
 
-    # get visualisation file lists
-    dfs = {
-        "low": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
-        "mid": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
-        "high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_mid": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
-        "mid_high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
-        "three": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
+    # get val visualisation file lists
+    val_dfs = {
+        "low": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
+        "mid": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
+        "high": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_mid": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
+        "mid_high": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_high": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
+        "three": pd.read_csv(f"{val_tile_folder}/{args.test_tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
+    }
+    val_vis_files = []
+    for df in val_dfs.values():
+        if len(df) > 0:
+            val_vis_files.extend(df["filename"].to_list())
+    print(f"Length of val vis file list {len(val_vis_files)}.")
+
+    # get test visualisation file lists
+    test_dfs = {
+        "low": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
+        "mid": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
+        "high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_mid": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
+        "mid_high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_high": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
+        "three": pd.read_csv(f"{tile_folder}/{args.test_tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
     }
     test_vis_files = []
-    for df in dfs.values():
+    for df in test_dfs.values():
         if len(df) > 0:
             test_vis_files.extend(df["filename"].to_list())
     print(f"Length of test vis file list {len(test_vis_files)}.")
@@ -94,6 +113,14 @@ if __name__ == "__main__":
                                  chart_path=chart_folder, chart_files=test_chart_files,
                                  class_categories=class_categories)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
+
+    # load val vis data
+    val_vis_sar_files = [f"SAR_{f}" for f in val_vis_files]
+    val_vis_chart_files = [f"CHART_{f}" for f in val_vis_files]
+    val_vis_dataset = SeaIceDataset(sar_path=sar_folder, sar_files=val_vis_sar_files,
+                                    chart_path=chart_folder, chart_files=val_vis_chart_files,
+                                    class_categories=class_categories)
+    val_vis_dataloader = DataLoader(val_vis_dataset, batch_size=args.batch_size, num_workers=args.n_workers, persistent_workers=True)
 
     # load test vis data
     test_vis_sar_files = [f"SAR_{f}" for f in test_vis_files]
@@ -130,6 +157,7 @@ if __name__ == "__main__":
     # test
     trainer = pl.Trainer.from_argparse_args(args)
     trainer.logger = wandb_logger
+    trainer.callbacks.append(Visualise(val_vis_dataloader, len(val_vis_files), args.classification_type))
     trainer.callbacks.append(Visualise(test_vis_dataloader, len(test_vis_files), args.classification_type))
 
     # train model
