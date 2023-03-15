@@ -67,13 +67,13 @@ if __name__ == "__main__":
 
     # get visualisation file lists
     dfs = {
-        "low": pd.read_csv(f"{args.tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
-        "mid": pd.read_csv(f"{args.tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
-        "high": pd.read_csv(f"{args.tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_mid": pd.read_csv(f"{args.tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
-        "mid_high": pd.read_csv(f"{args.tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
-        "low_high": pd.read_csv(f"{args.tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
-        "three": pd.read_csv(f"{args.tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
+        "low": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low.csv", index_col=0)[:args.n_to_visualise],
+        "mid": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_mid.csv", index_col=0)[:args.n_to_visualise],
+        "high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_mid": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low_mid.csv", index_col=0)[:args.n_to_visualise],
+        "mid_high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_mid_high.csv", index_col=0)[:args.n_to_visualise],
+        "low_high": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_low_high.csv", index_col=0)[:args.n_to_visualise],
+        "three": pd.read_csv(f"{tile_folder}/{args.tile_info_base}_three.csv", index_col=0)[:args.n_to_visualise]
     }
     test_vis_files = []
     for df in dfs:
