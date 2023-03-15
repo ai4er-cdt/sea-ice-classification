@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
     
     model = load(Path(f'scikit_models/{args.model_name}.joblib'))
-    
+    print('Predicting values')
     model.fit(X_test_data, Y_test_data.ravel())
     
     y_pred = model.predict(X_test_data)
