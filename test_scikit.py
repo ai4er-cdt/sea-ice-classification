@@ -77,7 +77,7 @@ if __name__ == "__main__":
         chart_filenames = [os.path.join(chart_folder, f'{chart}.{chart_ext}') for (chart, _, _) in chart_sar_pairs]
     
     # Sample tiles according to argsparse
-    if args.sample == 'True':
+    if args.sample:
         assert 0 < args.pct_sample <= 1
         n_sample = int(len(sar_filenames) * args.pct_sample)
         sample_n = np.random.randint(len(sar_filenames), size=(n_sample))
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # run = api.run(f"{args.username}/sea-ice-classification/{args.name}")
     
     model = load(Path(f'scikit_models/{args.model_name}.joblib'))
-    print('Predicting values')
+    print('Predicting values...')
     model.fit(X_test_data, Y_test_data.ravel())
     
     y_pred = model.predict(X_test_data)
