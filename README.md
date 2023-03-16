@@ -71,7 +71,16 @@ TO DO:
 
 ## Workflow
 
-TO DO: Include diagram of preprocessing and modelling steps.
+TO DO: Describe diagrams
+
+### CNN Workflow
+
+<img width="529" alt="Screenshot 2023-03-13 at 13 57 56" src="https://user-images.githubusercontent.com/114443493/225760686-54903233-65af-4708-922b-7de04d4055f9.png">
+
+### Decision Tree Workflow
+
+<img width="419" alt="Screenshot 2023-03-16 at 16 27 18" src="https://user-images.githubusercontent.com/114443493/225760782-480291e1-00e1-4354-baae-41f9303a5e45.png">
+
 
 ## Usage
 An archived copy of this repository at the time of project submission (17th March 2023) is available on Zenodo **(TBC)**. To test the code and recreate the results of this project, follow the steps below: 
