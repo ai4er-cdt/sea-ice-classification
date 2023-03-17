@@ -29,10 +29,9 @@ This project uses two publicly available datasets:
 - Sentinel 1 Synthetic Aperture Radar (SAR) satellite imagery provided by the [Copernicus Open Access Hub](https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-1/data-products), operated by the European Space Agency. The Copernicus Open Data Policy enables free, open access to Sentinel products [[2](https://sentinel.esa.int/web/sentinel/faq)]. Sentinel Terms and Conditions can be found at the following [link](https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice).
 
 These datasets are shown below superimposed over the region of interest on Google Earth.
-
-### TO DO - Joshua - Include data images
-
-<img width="100%" alt="data" src="readme_images/data_overview.png">
+<p align="center">
+    <img src="readme_images/data_overview.png" width="100%"\>
+</p>
 
 <img width="764" alt="data" src="https://user-images.githubusercontent.com/114443493/224169683-72f51105-c709-43b5-86f5-54f95e49a74e.png">
 
