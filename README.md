@@ -15,13 +15,12 @@ AI4ER is the the UKRI Centre for Doctoral Training (CDT) in the Application of A
 
 ## Project Description
 
-This goal of this 3-month project is to automatically classify sea ice concentration in the East Weddell Sea, Antarctica. The Weddell Sea is an active area of iceberg calving [[1]](https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/) and a critical shipping route for access to the Halley Research Station, a research facility operated by the British Antarctic Survey. Accurate assessments of sea ice concenration in the East Weddell Sea are hence of great importance to ensure the safety and success of future expeditions.
+This goal of this 3-month project was to automatically classify sea ice concentration in the East Weddell Sea, Antarctica. The Weddell Sea is an active area of iceberg calving [[1]](https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/) and a critical shipping route for access to the Halley Research Station, a research facility operated by the British Antarctic Survey. Accurate assessments of sea ice concenration in the East Weddell Sea are hence of great importance to ensure the safety and success of future expeditions.
 
 
 ## Demonstration
 
-TO DO:
-- Include images of before/after human vs. model ice chart maps
+### TO DO: Include images of reference vs predicted charts
 
 
 ## Data
@@ -31,41 +30,53 @@ This project uses two publicly available datasets:
 
 These datasets are shown below superimposed over the region of interest on Google Earth.
 
+### TO DO - Joshua - Include data images
+
 <img width="764" alt="data" src="https://user-images.githubusercontent.com/114443493/224169683-72f51105-c709-43b5-86f5-54f95e49a74e.png">
 
 ## Models
 This project uses three models:
-1. A baseline Decision Tree model
-2. A basic Unet
+1. A baseline Decision Tree (DT) model
+2. A basic U-Net
 3. A pretrained resnet34 from the [segmentation_models_pytorch](https://segmentation-modelspytorch.readthedocs.io/en/latest/) Python library, which is distributed under the MIT license. [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 ## Code Structure
-TO DO:
+
 ```
-├───Data                              <-- containing the satellite images and ice chart data used for this project
+├───Data                            <-- containing the satellite images and ice chart data used for this project
 │   ├───dual_band_images
 │   ├───rasterised_ice_charts
-├───Notebooks                         <-- notebooks to demonstrate and recreate our exploratory data analysis, preprocessing, modelling and evaluation
+├───Notebooks                       <-- notebooks to demonstrate and recreate our exploratory data analysis, preprocessing, modelling and evaluation
 │   ├───example.ipynb
-|──────constants.py
 |──────info.md
-|──────interesting_images.csv
-|──────metrics.csv
-|──────metrics.py
-|──────metrics_per_pair.csv
-|──────tiling.py
-│──────model.py
-│──────split.py
-│──────test.py
-│──────train.py
-│──────train_scikit.py
-│──────util.py
+|──────JASMIN.md                    <-- Step-by-step guide
+|──────constants.py                 <-- SAR/ice chart pairs, binary/ternary classes
+|──────environment.yml              <-- List of Python modules
+|──────interesting_images.csv       <-- List of tiles containing all three categories for ternary classification
+|──────interesting_images.py        <-- Generate interesting_images.csv
+|──────metrics.csv                  <-- Lists mean and std dev of all SAR images
+|──────metrics.py                   <-- Calculate metrics.csv
+|──────metrics_per_pair.csv         <-- Lists mean and std dev for individual SAR image
+│──────model.py                     <-- Unet model and evaluation metrics
+│──────split.py                     <-- Construct training & validation datasets
+│──────test.py                      <-- Test CNN and save output to WANDB
+|──────test_scikit.py               <-- Test DT and save output to WANDB
+|──────test_slurm_script.py         <-- Test the model on JASMIN
+|──────test_slurm_script_scikit.py  <-- Test the DT on JASMIN
+|──────tiling.py                    <-- Generate tiles from SAR/ice chart paris
+│──────train.py                     <-- Train CNN and save output to WANDB
+|──────train_scikit.py              <-- Train DT and save output to WANDB
+|──────train_slurm_script.sh        <-- Train the model on JASMIN
+|──────train_slurm_script_scikit.sh <-- Train the DT on JASMIN
+│──────util.py                      <-- Load data into the model and normalise
+|──────util_scikit.py               <-- Load data into the model, normalise and create the training dataset
 ```
 
 ## Workflow
 
 ### CNN Workflow
+Workflow for U-Net and resnet34
 
 <img width="529" alt="Screenshot 2023-03-13 at 13 57 56" src="https://user-images.githubusercontent.com/114443493/225760686-54903233-65af-4708-922b-7de04d4055f9.png">
 
@@ -79,7 +90,7 @@ An archived copy of this repository at the time of project submission (17th Marc
 1. Clone this repository (for the latest version) or retrieve the archived copy from Zenodo
 2. Create and activate the conda environment using ```conda activate environment.yml```, which contains all required Python modules and versions.
 3. To generate ice chart and SAR tile pairs of 256x256 dimensions run: ```python tiling.py```. Tile pairs containing NaN values will be discarded.
-4. Follow the steps in [JASMIN.md](https://github.com/ai4er-cdt/sea-ice-classification/blob/dev/JASMIN.md) to train and test the model. Input arguments that were modified for this project include:
+4. Follow the steps in [JASMIN.md](https://github.com/ai4er-cdt/sea-ice-classification/blob/dev/JASMIN.md) to train and test the CNN or DT model. Input arguments that were modified for this project include:
 
     | Argument                   | Options          | Default|
     | -------------------------- |:----------------:| ------:|
@@ -105,5 +116,3 @@ With special thanks to our advisors for their project guidance and technical sup
 [1] Brunt ice shelf in Antarctica calves giant iceberg (2023) British Antarctic Survey. Available at: https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/ (Accessed: March 9, 2023). 
 
 [2] The European Space Agency (n.d.) FAQ content, FAQ - Sentinel Online - Sentinel Online. Available at: https://sentinel.esa.int/web/sentinel/faq (Accessed: March 17, 2023). 
-
-
