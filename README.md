@@ -7,7 +7,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-# AI4ER Guided Team Challenge 2023: Sea Ice Classification
+# AI4ER Guided Team Challenge 2023: <br /> Sea Ice Classification
 
 This repository contains code for the Sea Ice Classification Challenge from the 2022-23 cohort of [AI4ER](https://ai4er-cdt.esc.cam.ac.uk). 
 <br><br>
