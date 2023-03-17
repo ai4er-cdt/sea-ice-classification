@@ -130,15 +130,15 @@ This project uses three models:
 
 ## Workflow
 
-### CNN Workflow
-Workflow for U-Net and resnet34
-
-<img width="529" alt="Screenshot 2023-03-13 at 13 57 56" src="https://user-images.githubusercontent.com/114443493/225760686-54903233-65af-4708-922b-7de04d4055f9.png">
+### CNN Workflow (U-Net and ResNet34)
+<p align="center">
+    <img src="readme_images/workflow1.png" width="100%"\>
+</p>
 
 ### Decision Tree Workflow
-
-<img width="419" alt="Screenshot 2023-03-16 at 16 27 18" src="https://user-images.githubusercontent.com/114443493/225760782-480291e1-00e1-4354-baae-41f9303a5e45.png">
-
+<p align="center">
+    <img src="readme_images/workflow2.png" width="100%"\>
+</p>
 
 ## Usage
 An archived copy of this repository at the time of project submission (17th March 2023) is available on Zenodo **(TBC)**. To test the code and recreate the results of this project, follow the steps below: 
