@@ -68,6 +68,24 @@ This project uses two publicly available datasets:
     <img src="readme_images/third_band.png" width="100%"\>
 </p>
 
+### Categories of sea ice concentrations.
+| **Code** | **Description** | **Code** | **Description** | **Code** | **Description** |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| 0 | Ice Free | 35 | 3/10 to 5/10 ice | 78 | 7/10 to 8/10 ice |
+| 1 | Open Water (	extless 1/10   ice) | 40 | 4/10 ice | 79 | 7/10 to 9/10 ice |
+| 2 | Bergy Water | 45 | 4/10 to 5/10 ice | 80 | 8/10 ice |
+| 10 | 1/10 ice | 46 | 4/10 to 6/10 ice | 81 | 8/10 to 10/10 |
+| 12 | 1/10 to 2/10 ice | 47 | 4/10 to 7/10 ice | 89 | 8/10 to 9/10 ice |
+| 13 | 1/10 to 3/10 ice | 50 | 5/10 ice | 90 | 9/10 ice |
+| 14 | 1/10 to 4/10 ice | 56 | 5/10 to 6/10 ice | 91 | 9/10 to 10/10 ice,   9+/10 ice |
+| 20 | 2/10 ice | 57 | 5/10 to 7/10 ice | 92 | 10/10 ice |
+| 23 | 2/10 to 3/10 ice | 60 | 6/10 ice | 99 | Unknown/Undetermined |
+| 24 | 2/10 to 4/10 ice | 67 | 6/10 to 7/10 ice | -9 | Null Value |
+| 30 | 3/10 ice | 68 | 6/10 to 8/10 ice | 100 | Full Ice |
+| 34 | 3/10 to 4/10 ice | 70 | 7/10 ice |  |  |
+
+
+
 ## Models
 This project uses three models:
 1. A baseline Decision Tree (DT) model
