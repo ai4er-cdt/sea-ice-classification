@@ -21,15 +21,13 @@ This goal of this 3-month project is to automatically classify sea ice concentra
 ## Demonstration
 
 TO DO:
-- Include link to video
 - Include images of before/after human vs. model ice chart maps
-- Look into [Hugging Face platform](https://huggingface.co/) platform?
 
 
 ## Data
 This project uses two publicly available datasets:
-- Labeled sea ice charts provided by the [Norwegian Ice Service](http://ice.aari.aq/antice/)
-- Sentinel 1 Synthetic Aperture Radar (SAR) satellite imagery provided by the [European Space Agency](https://www.esa.int) and [Google Earth Engine](https://developers.google.com/earth-engine/datasets/catalog/sentinel)
+- Labeled sea ice charts provided by the [Norwegian Ice Service](http://ice.aari.aq/antice/).
+- Sentinel 1 Synthetic Aperture Radar (SAR) satellite imagery provided by the [Copernicus Open Access Hub](https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-1/data-products), operated by the European Space Agency. The Coperncicus Open Data Policy enables free, open access to Sentinel products [[2](https://sentinel.esa.int/web/sentinel/faq)]. Sentinel Terms and Conditions can be found at the following [link](https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice).
 
 These datasets are shown below superimposed over the region of interest on Google Earth.
 
@@ -37,7 +35,7 @@ These datasets are shown below superimposed over the region of interest on Googl
 
 ## Models
 This project uses three models:
-1. A baseline Random Forest model
+1. A baseline Decision Tree model
 2. A basic Unet
 3. A pretrained resnet34 from the [segmentation_models_pytorch](https://segmentation-modelspytorch.readthedocs.io/en/latest/) Python library, which is distributed under the MIT license. [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -50,28 +48,22 @@ TO DO:
 │   ├───rasterised_ice_charts
 ├───Notebooks                         <-- notebooks to demonstrate and recreate our exploratory data analysis, preprocessing, modelling and evaluation
 │   ├───example.ipynb
-├───Prepocessing                      <-- preprocessing python scripts and data evaluation
-|   ├───constants.py
-|   ├───info.md
-|   ├───interesting_images.csv
-|   ├───metrics.csv
-|   ├───metrics.py
-|   ├───metrics_per_pair.csv
-|   ├───tiling.py
-├───Model                             <-- modelling python scripts, including Random Forest and Unet
-│   ├───model.py
-│   ├───split.py
-│   ├───test.py
-│   ├───train.py
-│   ├───train_scikit.py
-│   ├───util.py
-├───Results                           <-- model evaluation python scripts
-│   ├───TBC.py
+|──────constants.py
+|──────info.md
+|──────interesting_images.csv
+|──────metrics.csv
+|──────metrics.py
+|──────metrics_per_pair.csv
+|──────tiling.py
+│──────model.py
+│──────split.py
+│──────test.py
+│──────train.py
+│──────train_scikit.py
+│──────util.py
 ```
 
 ## Workflow
-
-TO DO: Describe diagrams
 
 ### CNN Workflow
 
@@ -87,17 +79,14 @@ An archived copy of this repository at the time of project submission (17th Marc
 1. Clone this repository (for the latest version) or retrieve the archived copy from Zenodo
 2. Create and activate the conda environment using ```conda activate environment.yml```, which contains all required Python modules and versions.
 3. To generate ice chart and SAR tile pairs of 256x256 dimensions run: ```python tiling.py```. Tile pairs containing NaN values will be discarded.
-4. To train the model run: ```python train.py```. Input arguments include:
+4. Follow the steps in [JASMIN.md](https://github.com/ai4er-cdt/sea-ice-classification/blob/dev/JASMIN.md) to train and test the model. Input arguments that were modified for this project include:
 
     | Argument                   | Options          | Default|
     | -------------------------- |:----------------:| ------:|
     | --model                    | unet, resnet34   | unet   |
     | --classification_type      | binary, ternary  | binary |
-    | --criterion                | ce, dice, focal  | ce     |
     | --sar_band3                | angle, ratio     | angle  |
   
-5. TO DO: To load the model from a checkpoint file run: ```TBC```
-
 
 ## Contributors
 Project core members contributed equally to this work:
@@ -108,9 +97,13 @@ Project core members contributed equally to this work:
 - [Andrés Camilo Zúñiga González](https://ai4er-cdt.esc.cam.ac.uk/StaffDirectory/students-all/2022-students), AI4ER MRes Student (2022 Cohort), University of Cambridge
 
 With special thanks to our advisors for their project guidance and technical support:
-- Madeline Lisaus, AI4ER PhD Student (2021 Cohort), University of Cambridge
-- Jonathon Roberts, AI4ER PhD Student (2021 Cohort), University of Cambridge
+- Madeline Lisaius, AI4ER PhD Student (2021 Cohort), University of Cambridge
+- Jonathan Roberts, AI4ER PhD Student (2021 Cohort), University of Cambridge
 - Martin Rogers, AI-lab, British Antarctic Survey
 
 ## References
 [1] Brunt ice shelf in Antarctica calves giant iceberg (2023) British Antarctic Survey. Available at: https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/ (Accessed: March 9, 2023). 
+
+[2] The European Space Agency (n.d.) FAQ content, FAQ - Sentinel Online - Sentinel Online. Available at: https://sentinel.esa.int/web/sentinel/faq (Accessed: March 17, 2023). 
+
+
