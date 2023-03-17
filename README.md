@@ -95,7 +95,7 @@ This project uses three models:
 
 ```
 |──────tutorial                     <-- Folder containing tutorial CNN notebook
-|──────info.md
+|──────info.md                      <-- Sea ice concentration values
 |──────JASMIN.md                    <-- Step-by-step guide
 |──────constants.py                 <-- SAR/ice chart pairs, binary/ternary classes
 |──────environment.yml              <-- List of Python modules
