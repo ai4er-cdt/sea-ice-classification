@@ -84,7 +84,10 @@ This project uses two publicly available datasets:
 | 30 | 3/10 ice | 68 | 6/10 to 8/10 ice | 100 | Full Ice |
 | 34 | 3/10 to 4/10 ice | 70 | 7/10 ice |  |  |
 
-
+### Schematic illustration of the overlapping tiling technique.
+<p align="center">
+    <img src="readme_images/tiling.png" width="100%"\>
+</p>
 
 ## Models
 This project uses three models:
