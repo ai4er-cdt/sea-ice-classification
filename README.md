@@ -86,7 +86,7 @@ This project uses two publicly available datasets:
 
 ### Schematic illustration of the overlapping tiling technique.
 <p align="center">
-    <img src="readme_images/tiling.png" width="100%"\>
+    <img src="readme_images/tiling.png" width="50%"\>
 </p>
 
 ## Models
