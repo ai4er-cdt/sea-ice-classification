@@ -46,24 +46,24 @@ This project uses two publicly available datasets:
 
 |   Pair      Number   |   Subset   | Date of Sea   Ice      Concentration Chart | Observation   Window      of SAR signals | Geographical      Coverage |
 |:--------------------:|:----------:|:------------------------------------------:|:----------------------------------------:|:--------------------------:|
-|                 1    |  training  |                   Nov 6, 2017              |        10:25:50 PM -   10:26:55 PM       |                WS          |
-|                 2    |  training  |                Dec 23, 2017                |        10:42:00 PM -   10:43:04 PM       |                WS          |
-|                 3    |  training  |                 Jan 4, 2018                |        10:41:59 PM -   10:43:03 PM       |                WS          |
-|                 4    |  training  |                Feb 22, 2018                |        11:22:34 PM -   11:23:38 PM       |                WS          |
-|                 5    |  training  |                Feb 23, 2018                |        12:59:54 AM - 1:00:58   AM        |                WS          |
-|                 6    |  training  |                Feb 26, 2018                |         1:24:13 AM - 1:25:17   AM        |                WS          |
-|               7      |  training  |                 Dec 3, 2018                |         8:18:15 AM - 8:19:14   AM        |                AP          |
-|                 8    |  training  |                 Dec 9, 2018                |         8:51:00 AM - 8:52:08   AM        |                AP          |
-|                 9    |  training  |                Dec 10, 2018                |        11:50:06 PM -   11:51:05 PM       |                AP          |
-|                10    |  training  |                Dec 20, 2018                |         8:19:15 AM - 8:20:19   AM        |                AP          |
-|                11    |  training  |                 Mar 5, 2020                |        12:35:47 AM -   12:36:52 AM       |                WS          |
-|                12    |  training  |                Mar 13, 2020                |         1:08:15 AM - 1:09:20   AM        |                WS          |
-|                13    |  training  |                Dec 23, 2021                |        11:14:52 PM -   11:15:43 PM       |             WS             |
-|                14    | validating |                Mar 13, 2019                |        11:22:41 PM -   11:23:45 PM       |                WS          |
-|                15    | validating |                Jan 17, 2020                |        10:01:39 PM -   10:02:43 PM       |                WS          |
-|               16     |   testing  |                Dec 16, 2022                |        11:23:48 PM -   11:24:53 PM       |             WS             |
-|                17    |   testing  |                Dec 22, 2022                |         1:09:23 AM - 1:10:27   AM        |             WS             |
-|                18    |   testing  |                Jan 12, 2023                |         8:32:41 PM - 8:33:45   PM        |             WS             |
+|                 1    |  training  |                   Nov 6, 2017              |        10:25:50 PM -   10:26:55 PM       |                Weddell Sea          |
+|                 2    |  training  |                Dec 23, 2017                |        10:42:00 PM -   10:43:04 PM       |                Weddell Sea          |
+|                 3    |  training  |                 Jan 4, 2018                |        10:41:59 PM -   10:43:03 PM       |                Weddell Sea          |
+|                 4    |  training  |                Feb 22, 2018                |        11:22:34 PM -   11:23:38 PM       |                Weddell Sea          |
+|                 5    |  training  |                Feb 23, 2018                |        12:59:54 AM - 1:00:58   AM        |                Weddell Sea          |
+|                 6    |  training  |                Feb 26, 2018                |         1:24:13 AM - 1:25:17   AM        |                Weddell Sea          |
+|               7      |  training  |                 Dec 3, 2018                |         8:18:15 AM - 8:19:14   AM        |                Antarctica Peninsula          |
+|                 8    |  training  |                 Dec 9, 2018                |         8:51:00 AM - 8:52:08   AM        |                Antarctica Peninsula          |
+|                 9    |  training  |                Dec 10, 2018                |        11:50:06 PM -   11:51:05 PM       |                Antarctica Peninsula          |
+|                10    |  training  |                Dec 20, 2018                |         8:19:15 AM - 8:20:19   AM        |                Antarctica Peninsula          |
+|                11    |  training  |                 Mar 5, 2020                |        12:35:47 AM -   12:36:52 AM       |                Weddell Sea          |
+|                12    |  training  |                Mar 13, 2020                |         1:08:15 AM - 1:09:20   AM        |                Weddell Sea          |
+|                13    |  training  |                Dec 23, 2021                |        11:14:52 PM -   11:15:43 PM       |             Weddell Sea             |
+|                14    | validating |                Mar 13, 2019                |        11:22:41 PM -   11:23:45 PM       |                Weddell Sea          |
+|                15    | validating |                Jan 17, 2020                |        10:01:39 PM -   10:02:43 PM       |                Weddell Sea          |
+|               16     |   testing  |                Dec 16, 2022                |        11:23:48 PM -   11:24:53 PM       |             Weddell Sea             |
+|                17    |   testing  |                Dec 22, 2022                |         1:09:23 AM - 1:10:27   AM        |             Weddell Sea             |
+|                18    |   testing  |                Jan 12, 2023                |         8:32:41 PM - 8:33:45   PM        |             Weddell Sea             |
 
 ## Models
 This project uses three models:
