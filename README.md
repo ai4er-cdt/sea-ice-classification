@@ -29,18 +29,18 @@ This project uses two publicly available datasets:
 - Sentinel 1A and 1B Synthetic Aperture Radar (SAR) satellite imagery provided by the [Copernicus Open Access Hub](https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-1/data-products), operated by the European Space Agency. The Copernicus Open Data Policy enables free, open access to Sentinel products [[2](https://sentinel.esa.int/web/sentinel/faq)]. Sentinel Terms and Conditions can be found at the following [link](https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice).
 
 
-These datasets are shown below superimposed over the region of interest on Google Earth.
+### Overview.
 <p align="center">
     <img src="https://user-images.githubusercontent.com/114443493/224169683-72f51105-c709-43b5-86f5-54f95e49a74e.png" width="100%"\>
 </p>
 
-Relative locations and areal extents of (b) training, (c) validating, and (d) testing subsets.
+### Relative locations and areal extents of (b) training, (c) validating, and (d) testing subsets.
 <p align="center">
     <img src="readme_images/train_val_test_split.png" width="100%"\>
 </p>
 
 
-Temporal and geographical coverage of the dataset.
+### Temporal and geographical coverage of the dataset.
 |   Pair      Number   |   Subset   | Date of Sea   Ice      Concentration Chart | Observation   Window      of SAR signals | Geographical      Coverage |
 |:--------------------:|:----------:|:------------------------------------------:|:----------------------------------------:|:--------------------------:|
 |                 1    |  training  |                   Nov 6, 2017              |        10:25:50 PM -   10:26:55 PM       |                Weddell Sea          |
@@ -63,7 +63,7 @@ Temporal and geographical coverage of the dataset.
 |                18    |   testing  |                Jan 12, 2023                |         8:32:41 PM - 8:33:45   PM        |             Weddell Sea             |
 
 
-Sample visualizations of (a) water and ice, (b) HH band, (c) HV band, (d) angle, and (e) HH/HV.
+### Sample visualizations of (a) water and ice, (b) HH band, (c) HV band, (d) angle, and (e) HH/HV.
 <p align="center">
     <img src="readme_images/third_band.png" width="100%"\>
 </p>
