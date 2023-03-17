@@ -12,6 +12,16 @@ This is a step-by-step guide to running models on ORCHID, the batch GPU cluster 
 3. You have cloned this repository
 4. You have run tiling.py to generate tiles from the original SAR and ice chart images
 5. You have created the conda environment from the environment.yml file
+``` 
+conda env create -f environment.yml
+conda activate sea-ice-classification
+```
+If the above does not work, you can create the environment manually:
+```
+conda create --name sea-ice-classification
+<import each module individually>
+conda activate sea-ice-classification
+```
 
 ### Step 1: Login to JASMIN
 ```
@@ -19,34 +29,28 @@ This is a step-by-step guide to running models on ORCHID, the batch GPU cluster 
 ssh -A <userID>@login1.jasmin.ac.uk
 
 # Then, connect to one of the sci servers (1-8)
-ssh -AX <userID@sci4.jasmin.ac.uk
+ssh -AX <userID>@sci4.jasmin.ac.uk
 
 # Finally, connect to the interactice GPU node
 ssh -A gpuhost001.jc.rl.ac.uk
 ```
+
+## Convolutional Neural Network Models
 
 ### Step 2: Create the train SLURM script
 Use the train_slurm_script.sh file from this repository.
 
 ```
 #!/bin/bash
-#SBATCH --gres=gpu:4                <-- request 4 GPU nodes
-#SBATCH --partition=orchid          <-- request to run on ORCHID
-#SBATCH --account=orchid
-#SBATCH -o %j.out                   <-- specify the job output file
-#SBATCH -e %j.err                   <-- specify the job error file
-#SBATCH --time=24:00:00             <-- the minimum is 1 hour, the maximum is 24 hours
-#SBATCH --ntasks=1                  
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32000
+#SBATCH --partition par-multi
+#SBATCH --mem 256000
+#SBATCH --ntasks 16
+#SBATCH --time 48:00:00
+#SBATCH --output %j.out
+#SBATCH --error %j.err
 
-# executables
 conda activate sea-ice-classification
-nvidia-smi
-
-# EXAMPLE: Unet, Binary, Angle
-python train.py --model=unet --classification_type=binary --criterion=ce --batch_size=256 --learning_rate=1e-3 --seed=0 --sar_band3=angle --n_workers=4 --devices=4 --max_epochs=20
+python train_scikit.py --sar_folder sar_no_stride --chart_folder chart_no_stride --model DecisionTree --grid_search --sample
 ```
 
 Note: The SLURM batch queue is 'ORCHID' with Maximum runtime of 24 hours and the default runtime is 1 hour [2].
@@ -95,6 +99,76 @@ python test.py --username=<wandb_username> --name=<wandb_job_name> --checkpoint=
 To run the script, type
 ```
 sbatch test_slurm_script.sh
+```
+This will return the following output
+```
+Submitted batch job 45403175
+```
+
+To check the status of the job, type
+```
+scontrol show job 
+```
+
+## Decision Tree Model
+### Step 1: Rerun tiling.py
+To regenerate tiles without the sliding window, to avoid data leakage.
+```
+python tiling.py --stride=None
+```
+
+### Step 2: Create the train SLURM script
+Use the train_slurm_script_scikit.sh file from this repository.
+
+```
+#!/bin/bash
+#SBATCH --partition par-multi
+#SBATCH --mem 256000
+#SBATCH --ntasks 16
+#SBATCH --time 48:00:00
+#SBATCH --output %j.out
+#SBATCH --error %j.err
+
+conda activate sea-ice-classification
+python train_scikit.py --sar_folder sar_no_stride --chart_folder chart_no_stride --model DecisionTree --grid_search --sample
+```
+
+### Step 3: Run the test SLURM script
+To run the script, type
+```
+sbatch train_slurm_script_scikit.sh 
+```
+This will return the following output
+```
+Submitted batch job 45403175
+```
+
+To check the status of the job, type
+```
+scontrol show job 
+```
+
+### Step 4: Create the test SLURM script
+
+Use the train_slurm_script.sh file from this repository.
+
+```
+#!/bin/bash
+#SBATCH --partition par-multi
+#SBATCH --mem 256000
+#SBATCH --ntasks 16
+#SBATCH --time 48:00:00
+#SBATCH --output %j.out
+#SBATCH --error %j.err
+
+# EXAMPLE: Binary, angle
+python test_scikit.py --model_name='' --sar_folder sar_no_stride --chart_folder chart_no_stride --sample --pct_sample 0.1
+```
+
+### Step 5: Run the test SLURM script
+To run the script, type
+```
+sbatch test_slurm_script_scikit.sh
 ```
 This will return the following output
 ```
