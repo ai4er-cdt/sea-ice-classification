@@ -32,7 +32,7 @@ These datasets are shown below superimposed over the region of interest on Googl
 
 ### TO DO - Joshua - Include data images
 
-<img width="764" alt="data" src="https://github.com/ai4er-cdt/sea-ice-classification/tree/dev/readme_images/data_overview.png">
+<img width="764" alt="data" src="readme_images/data_overview.png">
 
 <img width="764" alt="data" src="https://user-images.githubusercontent.com/114443493/224169683-72f51105-c709-43b5-86f5-54f95e49a74e.png">
 
