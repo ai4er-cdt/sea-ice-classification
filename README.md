@@ -94,11 +94,6 @@ This project uses three models:
 ## Code Structure
 
 ```
-├───Data                            <-- containing the satellite images and ice chart data used for this project
-│   ├───dual_band_images
-│   ├───rasterised_ice_charts
-├───Notebooks                       <-- exploratory data analysis notebooks
-│   ├───EDA_SIC.ipynb
 |──────info.md
 |──────JASMIN.md                    <-- Step-by-step guide
 |──────constants.py                 <-- SAR/ice chart pairs, binary/ternary classes
@@ -136,7 +131,7 @@ This project uses three models:
 </p>
 
 ## Usage
-An archived copy of this repository at the time of project submission (17th March 2023) is available on Zenodo **(TBC)**. To test the code and recreate the results of this project, follow the steps below: 
+To test the code and recreate the results of this project, follow the steps below: 
 1. Clone this repository (for the latest version) or retrieve the archived copy from Zenodo
 2. Create and activate the conda environment using ```conda activate environment.yml```, which contains all required Python modules and versions.
 3. To generate ice chart and SAR tile pairs of 256x256 dimensions run: ```python tiling.py```. Tile pairs containing NaN values will be discarded.
@@ -167,8 +162,11 @@ With special thanks to our advisors for their project guidance and technical sup
 
 [2] The European Space Agency (n.d.) FAQ content, FAQ - Sentinel Online - Sentinel Online. Available at: https://sentinel.esa.int/web/sentinel/faq (Accessed: March 17, 2023). 
 
-Our deep learning code is inspired by / adapted from the following previous projects: 
+Significant parts of our deep learning code are inspired by / adapted from the following:
+
 https://github.com/ampersandmcd/DeepExtremeMixtureModel
+
 https://github.com/ampersandmcd/COMETFlows
+
 https://github.com/ampersandmcd/CSE803FinalProject
 
