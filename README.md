@@ -5,7 +5,7 @@
 <img align="left" src="https://www.cam.ac.uk/sites/www.cam.ac.uk/files/inner-images/logo.jpg" width="300" height="75">
 <br><br>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 # AI4ER Guided Team Challenge 2023: Sea Ice Classification
 
@@ -25,12 +25,14 @@ This goal of this 3-month project was to automatically classify sea ice concentr
 
 ## Data
 This project uses two publicly available datasets:
-- Labeled sea ice charts provided by the [Norwegian Ice Service](http://ice.aari.aq/antice/).
-- Sentinel 1 Synthetic Aperture Radar (SAR) satellite imagery provided by the [Copernicus Open Access Hub](https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-1/data-products), operated by the European Space Agency. The Coperncicus Open Data Policy enables free, open access to Sentinel products [[2](https://sentinel.esa.int/web/sentinel/faq)]. Sentinel Terms and Conditions can be found at the following [link](https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice).
+- Labeled sea ice charts jointly developed by the [Arctic and Antarctic Research Institute, USA National/Naval Ice Center, and Norwegian Meteorological Institute](http://ice.aari.aq/antice/).
+- Sentinel 1 Synthetic Aperture Radar (SAR) satellite imagery provided by the [Copernicus Open Access Hub](https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-1/data-products), operated by the European Space Agency. The Copernicus Open Data Policy enables free, open access to Sentinel products [[2](https://sentinel.esa.int/web/sentinel/faq)]. Sentinel Terms and Conditions can be found at the following [link](https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice).
 
 These datasets are shown below superimposed over the region of interest on Google Earth.
 
 ### TO DO - Joshua - Include data images
+
+<img width="764" alt="data" src="https://github.com/ai4er-cdt/sea-ice-classification/tree/dev/readme_images/data_overview.png">
 
 <img width="764" alt="data" src="https://user-images.githubusercontent.com/114443493/224169683-72f51105-c709-43b5-86f5-54f95e49a74e.png">
 
