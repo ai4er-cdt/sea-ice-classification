@@ -1,0 +1,25 @@
+name: sea-ice-classification
+channels:
+  - defaults
+  - conda-forge
+  - nvidia
+  - pytorch
+dependencies:
+  - torchvision
+  - pytorch-cuda=11.7
+  - torchaudio
+  - pytorch
+  - numpy
+  - rioxarray
+  - matplotlib
+  - scikit-learn
+  - scikit-image
+  - scikit-learn-intelex
+  - wandb
+  - pandas
+  - pytorch-lightning
+  - torchmetrics
+  - pathlib
+  - xarray
+  - segmentation-models-pytorch
+  - cartopy
