@@ -166,3 +166,9 @@ With special thanks to our advisors for their project guidance and technical sup
 [1] Brunt ice shelf in Antarctica calves giant iceberg (2023) British Antarctic Survey. Available at: https://www.bas.ac.uk/media-post/brunt-ice-shelf-in-antarctica-calves-giant-iceberg/ (Accessed: March 9, 2023). 
 
 [2] The European Space Agency (n.d.) FAQ content, FAQ - Sentinel Online - Sentinel Online. Available at: https://sentinel.esa.int/web/sentinel/faq (Accessed: March 17, 2023). 
+
+Our deep learning code is inspired by / adapted from the following previous projects: 
+https://github.com/ampersandmcd/DeepExtremeMixtureModel
+https://github.com/ampersandmcd/COMETFlows
+https://github.com/ampersandmcd/CSE803FinalProject
+
