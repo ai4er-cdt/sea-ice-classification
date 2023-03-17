@@ -47,8 +47,8 @@ This project uses three models:
 ├───Data                            <-- containing the satellite images and ice chart data used for this project
 │   ├───dual_band_images
 │   ├───rasterised_ice_charts
-├───Notebooks                       <-- notebooks to demonstrate and recreate our exploratory data analysis, preprocessing, modelling and evaluation
-│   ├───example.ipynb
+├───Notebooks                       <-- exploratory data analysis notebooks
+│   ├───EDA_SIC.ipynb
 |──────info.md
 |──────JASMIN.md                    <-- Step-by-step guide
 |──────constants.py                 <-- SAR/ice chart pairs, binary/ternary classes
