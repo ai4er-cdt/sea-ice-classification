@@ -94,12 +94,14 @@ This project uses three models:
 ## Code Structure
 
 ```
+|──────tutorial                     <-- Folder containing tutorial CNN notebook
 |──────info.md
 |──────JASMIN.md                    <-- Step-by-step guide
 |──────constants.py                 <-- SAR/ice chart pairs, binary/ternary classes
 |──────environment.yml              <-- List of Python modules
 |──────interesting_images.csv       <-- List of tiles containing all three categories for ternary classification
 |──────interesting_images.py        <-- Generate interesting_images.csv
+|──────intro_deep_learning.ipynb    <-- Deep learning notebook
 |──────metrics.csv                  <-- Lists mean and std dev of all SAR images
 |──────metrics.py                   <-- Calculate metrics.csv
 |──────metrics_per_pair.csv         <-- Lists mean and std dev for individual SAR image
